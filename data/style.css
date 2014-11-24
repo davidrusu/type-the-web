@@ -1,4 +1,4 @@
-#ttw {
+.ttw {
     border: solid red 1px;
     background-color: gray;
     color: black;
@@ -14,4 +14,8 @@
 
 .ttw-wrong {
     background-color: red;
+}
+
+.ttw-selected {
+    border: solid red 1px;
 }
