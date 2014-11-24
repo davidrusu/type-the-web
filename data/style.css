@@ -1,0 +1,17 @@
+#ttw {
+    border: solid red 1px;
+    background-color: gray;
+    color: black;
+}
+
+#ttw-cursor {
+    background-color: white;
+}
+
+.ttw-correct {
+    background-color: green;
+}
+
+.ttw-wrong {
+    background-color: red;
+}
