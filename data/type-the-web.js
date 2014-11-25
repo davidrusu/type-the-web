@@ -39,17 +39,22 @@ function renderText(elem, content, contentStyleMap) {
 function reset(elem, backup) {
     $(elem).html(backup);
     $(elem).contents().unwrap();
+    return $(elem).contents()[0];
 }
 
+var constant = R.curry(function(x, y) {
+    return x;
+});
+
 function start(elem) {
+    console.log("starting");
+    var content = elem.nodeValue;//$(elem).text();
+    var contentStyleMap = R.map(constant(CharStyling.UNTYPED), content);
+    contentStyleMap[0] = CharStyling.CURSOR;
+    
     $(elem).wrap("<span class='ttw'></span>");
     elem = $(elem).parent();
     
-    var content = $(elem).text();
-    var contentStyleMap = [CharStyling.CURSOR];
-    for (var i = 1; i < content.length; i++) {
-        contentStyleMap.push(CharStyling.UNTYPED);
-    }
     
     var cursorIndex = 0;
     renderText(elem, content, contentStyleMap);
@@ -78,8 +83,9 @@ function start(elem) {
             var timeDelta = new Date().getTime() - timeStamp;
             alert("You took " + timeDelta / 1000 + "s");
             $(document).unbind('keypress', handleKeyPress);
-            var nextElem = nextTest($(elem), 15);
-            reset(elem, content);
+            var parent = $(elem).parent();
+            var node = reset(elem, content);
+            var nextElem = nextTextElement(node);
             if (nextElem) {
                 start(nextElem);
             }
@@ -91,89 +97,159 @@ function start(elem) {
     }
 }
 
-function nextTest(elem, n) {
-    console.log('nextTest', elem.html(), n);
-    if (n <= 0) {
-        return false;
-    }
-    var sibling = firstSiblingTextNode(elem);
-    if (!sibling) {
-        console.log("!sibling");
-        sibling = nextTest($(elem).parent(), n-1);
-        // 
-        // if ($(elem).parent().next().length) {
-        //     sibling = firstChildTextNode($(elem).parent().next());
-        //     console.log('nextTest parent', sibling.html());
-        //     if (!sibling) {
-        //         sibling = nextTest($(elem).parent(), n-1);
-        //     }
-        // }
-        if (!sibling) {
-            var cousins = elem.next().contents();
-            for (var i = 0; i<cousins.length; i++) {
-                sibling = firstChildTextNode(cousins[i]);
-                //sibling = nextTest(cousins[i], n-1);
-                if (sibling) {
-                    return sibling;
-                }
-            }
+function nextTextElement(elem) {
+    console.log("nextTextElement", elem.nodeValue);
+    var allTextNodes = [];
+    function findAllTextNodes(node) {
+        if (node.hasChildNodes()) {
+            R.map(findAllTextNodes, node.childNodes);
+        } else if (node.nodeType == 3 && node.nodeValue.trim().length) {
+            allTextNodes.push(node);
         }
     }
-    return sibling;
+    findAllTextNodes($('body')[0]);
+    console.log("nextTextElement", allTextNodes);
+    
+    var rest = R.skipUntil(R.eq(elem), allTextNodes);
+    console.log("nextTextElement", rest);
+    if (rest.length >= 2) {
+        return rest[1];
+    } else {
+        return false;
+    }
+}
+
+function nextTest(n, elem) {
+    console.log('nextTest', n);
+    if (n <= 0) {
+        console.log('nextTest', 'n <= 0');
+        return false;
+    }
+
+    // var textNode = firstChildTextNode(elem.contents()
+    //                                   .filter(function() {
+    //                                       return this != elem;
+    //                                   })[0]);
+    // if (textNode) {
+    //     console.log('nextTest', 'contents');
+    //     return textNode;
+    // }
+    var textNode = $(elem).next();
+    console.log(textNode);
+    if (textNode.length) {
+        console.log('nextTest', 'next');
+        return textNode;
+    }
+    
+    textNode = firstChildTextNode(elem.parent().next()
+                                  .contents()
+                                  .filter(function() {
+                                      return this != elem;
+                                  })[0]
+                                 );
+    if (textNode) {
+        console.log('nextTest', 'parents.next');
+        return textNode;
+    }
+
+    console.log('nextTest', 'failed');
+    return false;
+    for (var i = 0; i < textNodes.length; i++) {
+        textNode = nextTest(n-1, textNodes[i]);
+        if (textNode) {
+            console.log('nextTest', 'other');
+            return textNode;
+        }
+    }
+    return false;
+}
+
+//function nextTest(elem, n) {
+//    console.log('nextTest', elem.html(), n);
+//    if (n <= 0) {
+//        return false;
+//    }
+//    var sibling = firstSiblingTextNode(elem);
+//    if (!sibling) {
+//        console.log("!sibling");
+//        //sibling = nextTest($(elem).parent(), n-1);
+//        if (!sibling) {
+//            var cousins = $(elem).next().contents();
+//            for (var i = 0; i<cousins.length; i++) {
+//                sibling = firstChildTextNode(cousins[i]);
+//                //sibling = nextTest(cousins[i], n-1);
+//                if (sibling) {
+//                    return sibling;
+//                }
+//            }
+//        }
+//         
+//        if ($(elem).parent()) {
+//            sibling = firstChildTextNode($(elem).parent().next());
+//            if (!sibling) {
+//                sibling = nextTest($(elem).parent(), n-1);
+//            } else {
+//                console.log('nextTest parent', $(sibling).html());
+//            }
+//        }
+//    }
+//    return sibling;
+//}
+
+function isWhiteSpace(str) {
+    return str.trim().length >= 1;
 }
 
 function firstChildTextNode(elem) {
-    var contents = $(elem).contents();
-    for (var i = 0; i < contents.length; i++) {
-        var child = contents[i];
-        if (child.nodeType === 3 && $(child).text().trim().length >= 1) {
-            return child;
-        }
-    }
-    return false;
+    var textNodes = $(elem).contents()
+            .filter(function() {
+                return this.nodeType === 3;
+            })
+            .filter(function () {
+                return this.nodeValue.trim().length >= 1;
+            });
+    return textNodes ? textNodes[0] : false;
 }
 
 function firstSiblingTextNode(elem) {
-    var node = $(elem.get().nextSibling);
-    console.log('firstSiblingTextNode', elem.get().tagName, node.html());
-    var count = 0;
-    while(node && count < 10) {
-        count ++;
-        var textNode = firstChildTextNode(node);
-        if (textNode) {
-            return textNode;
-        }
-        node = node.next();
-    }
-    return false;
+    var textNodes = $(elem).parent()
+            .contents()
+            .filter(function() {
+                return this != elem;
+            })
+            .filter(function() {
+                return this.nodeType === 3;
+            });
+    return textNodes ? textNodes[0] : false;
 }
 
-
 var prevElem;
-var backupClass;
-
 function highlightTextNodes(e) {
     var elem = firstChildTextNode(
         document.elementFromPoint(e.clientX, e.clientY));
     
-    if (elem && !Object.is(prevElem, elem)) {
+    if (!Object.is(prevElem, elem)) {
         if (prevElem) {
             $(prevElem).unwrap();
+            prevElem = null;
         }
-        $(elem).wrap("<span class='ttw-selected'></span>");
-        prevElem = elem;
+        if (elem) {
+            $(elem).wrap("<span class='ttw-selected'></span>");
+            prevElem = elem;
+        }
     }
 }
 
 function setupTest(e) {
-    var elem = firstChildTextNode(
+    var textNode = firstChildTextNode(
         document.elementFromPoint(e.clientX, e.clientY));
-    if (elem) {
+    if (textNode) {
         $(document).unbind("mousemove", highlightTextNodes);
         $(document).unbind("click", setupTest);
         
-        $(elem).unwrap(); // it'll be wrapped in a span from the mousemove
-        start(elem);
+        $(textNode).unwrap(); // it'll be wrapped in a span from the mousemove
+        console.log('starting');
+        start(textNode);
         return false;
     }
     return true;
