@@ -175,17 +175,30 @@ function setHUDText(numTyped, numErrors, keysBurst, time) {
         numTyped / WORD_LENGTH / timeSec * 60 - numErrors * ERROR_PENALTY);
     
     console.log(numTyped, numCharsBurst, timeSec, burstTime, burstwpm, wpm);
-    var text = 
-        numTyped + " typed " 
-        + numErrors + " errors "
-        + burstwpm + " burst wpm "
-        + wpm + "wpm "
-        + timeSec + "s";
+    var text =
+        "<div class='reset' id='ttw-hud'>\
+           <div class='ttw-hud-stat'>\
+               <div class='ttw-inline' id='ttw-hud-num'>"+numTyped+"</div>\
+               <div class='ttw-hud-text'>typed</div>\
+           </div>\
+           <div class='ttw-hud-stat'>\
+               <div class='ttw-inline' id='ttw-hud-num'>"+numErrors+"</div>\
+               <div class='ttw-hud-text'>errors</div>\
+           </div>\
+           <div class='ttw-hud-stat'>\
+               <div class='ttw-inline' id='ttw-hud-num'>"+burstwpm+"</div>\
+               <div class='ttw-hud-text'>burst wpm</div>\
+           </div>\
+           <div class='ttw-hud-stat'>\
+               <div class='ttw-inline' id='ttw-hud-num'>"+wpm+"</div>\
+               <div class='ttw-hud-text'>wpm</div>\
+           </div>\
+        </div>";
     $("#ttw-hud").html(text);
 }
 
 function initHUD() {
-    $("<div id='ttw-hud'></div>").appendTo("body");
+    $("<div class='reset-this' id='ttw-hud'></div>").appendTo("body");
 }
 
 function killHUD() {
