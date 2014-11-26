@@ -5,7 +5,7 @@ var CharStyle = {
     DEF: R.identity
 };
 
-var BURST_TIME = 5; // seconds
+var BURST_TIME = 10; // seconds
 var WORD_LENGTH = 5; // chars
 var ERROR_PENALTY = 0.5; // how many wpm to take off for every error
 
@@ -66,11 +66,17 @@ function start(elem) {
     $(document).keypress(handleKeyPress);
     var keysTyped = 0;
     var errorsTyped = 0;
-    var keys
+    var keysBurst = [];
     function handleKeyPress(e) {
+        var currentTime = new Date().getTime();
         if (timeStamp === -1) {
-            timeStamp = new Date().getTime();
+            timeStamp = currentTime;
         }
+        var testTime = currentTime - timeStamp;
+        
+        keysBurst.push(testTime);
+        keysBurst = R.filter(R.lt(testTime - BURST_TIME * 1000), keysBurst);
+        keysTyped += 1;
         
         var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
 
@@ -82,13 +88,13 @@ function start(elem) {
             charStyle = CharStyle.COR;
         } else {
             charStyle = CharStyle.WRG;
+            errorsTyped += 1;
         }
         contentStyleMap[cursorIdx] = charStyle;
         
         cursorIdx += 1;
         if (cursorIdx >= content.length) {
-            var timeDelta = new Date().getTime() - timeStamp;
-            alert("You took " + timeDelta / 1000 + "s");
+            alert("You took " + testTime / 1000 + "s");
             $(document).unbind('keypress', handleKeyPress);
             
             var node = reset(spanElem, content);
@@ -100,6 +106,7 @@ function start(elem) {
         } else {
             contentStyleMap[cursorIdx] = CharStyle.CUR;
             renderText(spanElem, content, contentStyleMap);
+            setHUDText(keysTyped, errorsTyped, keysBurst, testTime);
         }
         return false;
     }
@@ -130,10 +137,6 @@ function nextTextElement(elem) {
     }
 }
 
-function isWhiteSpace(str) {
-    return str.trim().length >= 1;
-}
-
 function firstChildTextNode(elem) {
     var textNodes = $(elem).contents()
             .filter(function() {
@@ -162,11 +165,23 @@ function highlightTextNodes(e) {
     }
 }
 
-function formatHUDText(numTyped, numErrors, numCharsBurst) {
-    return numTyped + " typed, " + numErrors + " errors"
-        + "</br>"
-        + numCharsBurst / WORD_LENGTH * BURST_TIME + " burst wpm"
-        + numTyped / WORD_LENGTH - numErrors * ERROR_PENALTY + "wpm";
+function setHUDText(numTyped, numErrors, keysBurst, time) {
+    var timeSec = time / 1000;
+    var numCharsBurst = keysBurst.length;
+    var burstTime = (time - keysBurst[0]) / 1000;
+    
+    var burstwpm = Math.floor(numCharsBurst / WORD_LENGTH / burstTime * 60);
+    var wpm = Math.floor(
+        numTyped / WORD_LENGTH / timeSec * 60 - numErrors * ERROR_PENALTY);
+    
+    console.log(numTyped, numCharsBurst, timeSec, burstTime, burstwpm, wpm);
+    var text = 
+        numTyped + " typed " 
+        + numErrors + " errors "
+        + burstwpm + " burst wpm "
+        + wpm + "wpm "
+        + timeSec + "s";
+    $("#ttw-hud").html(text);
 }
 
 function initHUD() {
