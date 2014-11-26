@@ -1,20 +1,24 @@
-var CharStyling = {
-    CORRECT: mkCorrect,
-    WRONG: mkWrong,
-    CURSOR: mkCursor,
-    UNTYPED: function(text) { return text; } // identity func
+var CharStyle = {
+    COR: mkCorrect,
+    WRG: mkWrong,
+    CUR: mkCursor,
+    DEF: R.identity
 };
 
+var BURST_TIME = 5; // seconds
+var WORD_LENGTH = 5; // chars
+var ERROR_PENALTY = 0.5; // how many wpm to take off for every error
+
 function mkCursor(text) {
-    return "<span id='ttw-cursor'>" + text + "</span>";
+    return "<span class='ttw-typed' id='ttw-cursor'>" + text + "</span>";
 }
 
 function mkWrong(text) {
-    return "<span class='ttw-wrong'>" + text + "</span>";
+    return "<span class='ttw-typed ttw-wrong'>" + text + "</span>";
 }
 
 function mkCorrect(text) {
-    return "<span class='ttw-correct'>" + text + "</span>";
+    return "<span class='ttw-typed ttw-correct'>" + text + "</span>";
 }
 
 function renderText(elem, content, contentStyleMap) {
@@ -36,10 +40,11 @@ function renderText(elem, content, contentStyleMap) {
     $(elem).html(result);
 }
 
-function reset(elem, backup) {
-    $(elem).html(backup);
-    $(elem).contents().unwrap();
-    return $(elem).contents()[0];
+function reset(spanElem, backup) {
+    $(spanElem).html(backup);
+    var newTextNode = $(spanElem).contents()[0];
+    $(newTextNode).unwrap();
+    return newTextNode;
 }
 
 var constant = R.curry(function(x, y) {
@@ -47,21 +52,21 @@ var constant = R.curry(function(x, y) {
 });
 
 function start(elem) {
-    console.log("starting");
-    var content = elem.nodeValue;//$(elem).text();
-    var contentStyleMap = R.map(constant(CharStyling.UNTYPED), content);
-    contentStyleMap[0] = CharStyling.CURSOR;
-    
+    var content = elem.nodeValue;
+    var contentStyleMap = R.repeatN(CharStyle.DEF, content.length);
+    var cursorIdx = 0;
+    contentStyleMap[cursorIdx] = CharStyle.CUR;
+
     $(elem).wrap("<span class='ttw'></span>");
-    elem = $(elem).parent();
+    var spanElem = $(elem).parent();
     
-    
-    var cursorIndex = 0;
-    renderText(elem, content, contentStyleMap);
+    renderText(spanElem, content, contentStyleMap);
     
     var timeStamp = -1;
     $(document).keypress(handleKeyPress);
-
+    var keysTyped = 0;
+    var errorsTyped = 0;
+    var keys
     function handleKeyPress(e) {
         if (timeStamp === -1) {
             timeStamp = new Date().getTime();
@@ -69,36 +74,38 @@ function start(elem) {
         
         var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
 
-        var char = String.fromCharCode(charCode);
+        var typedChar = String.fromCharCode(charCode);
+        var cursorChar = content.charAt(cursorIdx);
         
-        if (content.charAt(cursorIndex) === char) {
-            contentStyleMap[cursorIndex] = CharStyling.CORRECT;
+        var charStyle;
+        if (cursorChar === typedChar) {
+            charStyle = CharStyle.COR;
         } else {
-            contentStyleMap[cursorIndex] = CharStyling.WRONG;
+            charStyle = CharStyle.WRG;
         }
-        cursorIndex += 1;
+        contentStyleMap[cursorIdx] = charStyle;
         
-
-        if (cursorIndex >= content.length) {
+        cursorIdx += 1;
+        if (cursorIdx >= content.length) {
             var timeDelta = new Date().getTime() - timeStamp;
             alert("You took " + timeDelta / 1000 + "s");
             $(document).unbind('keypress', handleKeyPress);
-            var parent = $(elem).parent();
-            var node = reset(elem, content);
+            
+            var node = reset(spanElem, content);
             var nextElem = nextTextElement(node);
+
             if (nextElem) {
                 start(nextElem);
             }
         } else {
-            contentStyleMap[cursorIndex] = CharStyling.CURSOR;
-            renderText(elem, content, contentStyleMap);
+            contentStyleMap[cursorIdx] = CharStyle.CUR;
+            renderText(spanElem, content, contentStyleMap);
         }
         return false;
     }
 }
 
 function nextTextElement(elem) {
-    console.log("nextTextElement", elem.nodeValue);
     var allTextNodes = [];
     function findAllTextNodes(node) {
         if (node.hasChildNodes()) {
@@ -108,93 +115,20 @@ function nextTextElement(elem) {
         }
     }
     findAllTextNodes($('body')[0]);
-    console.log("nextTextElement", allTextNodes);
     
-    var rest = R.skipUntil(R.eq(elem), allTextNodes);
-    console.log("nextTextElement", rest);
+    var rest = R.skipUntil(
+        function (other) {
+            return elem == other;
+        }
+        , allTextNodes
+    );
+    
     if (rest.length >= 2) {
         return rest[1];
     } else {
         return false;
     }
 }
-
-function nextTest(n, elem) {
-    console.log('nextTest', n);
-    if (n <= 0) {
-        console.log('nextTest', 'n <= 0');
-        return false;
-    }
-
-    // var textNode = firstChildTextNode(elem.contents()
-    //                                   .filter(function() {
-    //                                       return this != elem;
-    //                                   })[0]);
-    // if (textNode) {
-    //     console.log('nextTest', 'contents');
-    //     return textNode;
-    // }
-    var textNode = $(elem).next();
-    console.log(textNode);
-    if (textNode.length) {
-        console.log('nextTest', 'next');
-        return textNode;
-    }
-    
-    textNode = firstChildTextNode(elem.parent().next()
-                                  .contents()
-                                  .filter(function() {
-                                      return this != elem;
-                                  })[0]
-                                 );
-    if (textNode) {
-        console.log('nextTest', 'parents.next');
-        return textNode;
-    }
-
-    console.log('nextTest', 'failed');
-    return false;
-    for (var i = 0; i < textNodes.length; i++) {
-        textNode = nextTest(n-1, textNodes[i]);
-        if (textNode) {
-            console.log('nextTest', 'other');
-            return textNode;
-        }
-    }
-    return false;
-}
-
-//function nextTest(elem, n) {
-//    console.log('nextTest', elem.html(), n);
-//    if (n <= 0) {
-//        return false;
-//    }
-//    var sibling = firstSiblingTextNode(elem);
-//    if (!sibling) {
-//        console.log("!sibling");
-//        //sibling = nextTest($(elem).parent(), n-1);
-//        if (!sibling) {
-//            var cousins = $(elem).next().contents();
-//            for (var i = 0; i<cousins.length; i++) {
-//                sibling = firstChildTextNode(cousins[i]);
-//                //sibling = nextTest(cousins[i], n-1);
-//                if (sibling) {
-//                    return sibling;
-//                }
-//            }
-//        }
-//         
-//        if ($(elem).parent()) {
-//            sibling = firstChildTextNode($(elem).parent().next());
-//            if (!sibling) {
-//                sibling = nextTest($(elem).parent(), n-1);
-//            } else {
-//                console.log('nextTest parent', $(sibling).html());
-//            }
-//        }
-//    }
-//    return sibling;
-//}
 
 function isWhiteSpace(str) {
     return str.trim().length >= 1;
@@ -207,18 +141,6 @@ function firstChildTextNode(elem) {
             })
             .filter(function () {
                 return this.nodeValue.trim().length >= 1;
-            });
-    return textNodes ? textNodes[0] : false;
-}
-
-function firstSiblingTextNode(elem) {
-    var textNodes = $(elem).parent()
-            .contents()
-            .filter(function() {
-                return this != elem;
-            })
-            .filter(function() {
-                return this.nodeType === 3;
             });
     return textNodes ? textNodes[0] : false;
 }
@@ -240,6 +162,21 @@ function highlightTextNodes(e) {
     }
 }
 
+function formatHUDText(numTyped, numErrors, numCharsBurst) {
+    return numTyped + " typed, " + numErrors + " errors"
+        + "</br>"
+        + numCharsBurst / WORD_LENGTH * BURST_TIME + " burst wpm"
+        + numTyped / WORD_LENGTH - numErrors * ERROR_PENALTY + "wpm";
+}
+
+function initHUD() {
+    $("<div id='ttw-hud'></div>").appendTo("body");
+}
+
+function killHUD() {
+    $("#ttw-hud").remove();
+}
+
 function setupTest(e) {
     var textNode = firstChildTextNode(
         document.elementFromPoint(e.clientX, e.clientY));
@@ -248,7 +185,7 @@ function setupTest(e) {
         $(document).unbind("click", setupTest);
         
         $(textNode).unwrap(); // it'll be wrapped in a span from the mousemove
-        console.log('starting');
+        initHUD();
         start(textNode);
         return false;
     }

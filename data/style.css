@@ -1,21 +1,35 @@
 .ttw {
-    border: solid red 1px;
-    background-color: gray;
+    background-color: #d7ccc8;
+    color: #757575;
+    font-family: "Courier New", Courier, monospace
+}
+
+.ttw-typed {
     color: black;
 }
 
 #ttw-cursor {
-    background-color: white;
+    background-color: #b0bec5;
 }
 
 .ttw-correct {
-    background-color: green;
+    background-color: #dcedc8;
 }
 
 .ttw-wrong {
-    background-color: red;
+    background-color: #ef9a9a;
 }
 
 .ttw-selected {
     border: solid red 1px;
+}
+
+#ttw-hud {
+    position: fixed;
+    width: 200px;
+    height: 100px;
+    right: 10px;
+    top: 10px;
+    background-color: #d7ccc8;
+    color: #757575;
 }
