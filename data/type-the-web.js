@@ -153,7 +153,6 @@ function nextTextElement(elem) {
     }
     
     var allTextNodes = findAllTextNodes([], $('body')[0]);
-    var rest = R.skipUntil(R.eq(elem) , allTextNodes);
     var index = R.indexOf(elem, allTextNodes);
     var maybeTextNode = R.ifElse(R.eq(-1),
                                  R.alwaysFalse,
