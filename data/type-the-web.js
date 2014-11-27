@@ -1,42 +1,43 @@
 var CharStyle = {
-    COR: mkCorrect,
-    WRG: mkWrong,
-    CUR: mkCursor,
+    COR: styleCorrect,
+    WRG: styleWrong,
+    CUR: styleCursor,
     DEF: R.identity
 };
 
-var BURST_TIME = 10; // seconds
-var WORD_LENGTH = 5; // chars
-var ERROR_PENALTY = 0.5; // how many wpm to take off for every error
+var BURST_TIME = 10; // burst wpm time interval in seconds
+var WORD_LENGTH = 5; // chars per word
+// var ERROR_PENALTY = 0.5; // how many wpm to take off for every error
 
-function mkCursor(text) {
+function styleCursor(text) {
     return "<span class='ttw-typed' id='ttw-cursor'>" + text + "</span>";
 }
 
-function mkWrong(text) {
+function styleWrong(text) {
     return "<span class='ttw-typed ttw-wrong'>" + text + "</span>";
 }
 
-function mkCorrect(text) {
+function styleCorrect(text) {
     return "<span class='ttw-typed ttw-correct'>" + text + "</span>";
 }
 
-function renderText(elem, content, contentStyleMap) {
+// content / contentStyle is assumed to be non empty
+function renderText(elem, content, contentStyle) {
     var result = "";
     var run = content.charAt(0);
-    var prevStyler = contentStyleMap[0];
+    var prevStyle = contentStyle[0];
     
-    for (var i = 1; i < contentStyleMap.length; i++) {
-        var charStyler = contentStyleMap[i];
-        if (prevStyler != charStyler) {
-            result += prevStyler(run);
-            prevStyler = charStyler;
-            run = '';
+    for (var i = 1; i < contentStyle.length; i++) {
+        var charStyle = contentStyle[i];
+        if (prevStyle != charStyle) {
+            result += prevStyle(run);
+            prevStyle = charStyle;
+            run = "";
         }
         run += content.charAt(i);
     }
     
-    result += prevStyler(run);
+    result += prevStyle(run);
     $(elem).html(result);
 }
 
@@ -51,35 +52,26 @@ var constant = R.curry(function(x, y) {
     return x;
 });
 
-function start(elem) {
-    var content = elem.nodeValue;
+function createKeyHandler(spanElem, content, unbindHandlers) {
+    var startTime = -1;
+    var keysBurst = [];
+    var keysTyped = 0;
+    var errorsTyped = 0;
     var contentStyleMap = R.repeatN(CharStyle.DEF, content.length);
     var cursorIdx = 0;
     contentStyleMap[cursorIdx] = CharStyle.CUR;
-
-    $(elem).wrap("<span class='ttw'></span>");
-    var spanElem = $(elem).parent();
-    
-    renderText(spanElem, content, contentStyleMap);
-    
-    var timeStamp = -1;
-    $(document).keypress(handleKeyPress);
-    var keysTyped = 0;
-    var errorsTyped = 0;
-    var keysBurst = [];
     function handleKeyPress(e) {
         var currentTime = new Date().getTime();
-        if (timeStamp === -1) {
-            timeStamp = currentTime;
+        if (startTime === -1) {
+            startTime = currentTime;
         }
-        var testTime = currentTime - timeStamp;
-        
+        var testTime = currentTime - startTime;
+
         keysBurst.push(testTime);
         keysBurst = R.filter(R.lt(testTime - BURST_TIME * 1000), keysBurst);
         keysTyped += 1;
         
-        var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
-
+        var charCode = (typeof e.which === "number") ? e.which : e.keyCode;
         var typedChar = String.fromCharCode(charCode);
         var cursorChar = content.charAt(cursorIdx);
         
@@ -95,14 +87,7 @@ function start(elem) {
         cursorIdx += 1;
         if (cursorIdx >= content.length) {
             alert("You took " + testTime / 1000 + "s");
-            $(document).unbind('keypress', handleKeyPress);
-            
-            var node = reset(spanElem, content);
-            var nextElem = nextTextElement(node);
-
-            if (nextElem) {
-                start(nextElem);
-            }
+            nextElem(spanElem, content, unbindHandlers);
         } else {
             contentStyleMap[cursorIdx] = CharStyle.CUR;
             renderText(spanElem, content, contentStyleMap);
@@ -110,6 +95,51 @@ function start(elem) {
         }
         return false;
     }
+    
+    renderText(spanElem, content, contentStyleMap);
+    return handleKeyPress;
+}
+
+
+function nextElem(spanElem, content, unbindHandlers) {
+    console.log('next button pressed');
+    unbindHandlers();
+    var node = reset(spanElem, content);
+    var nextElem = nextTextElement(node);
+    if (nextElem) {
+        startTyping(nextElem);
+    }
+}
+
+function startTyping(elem) {
+    var content = elem.nodeValue;
+
+    $(elem).wrap("<span class='ttw'></span>");
+    var spanElem = $(elem).parent();
+
+    function unbindHandlers() {
+        $(document).unbind('keypress', handleKeyPress);
+        $('#ttw-skip-button').unbind('click', skipButtonHandler);
+        $('#ttw-stop-button').unbind('click', stopButtonHandler);
+    }
+    
+    var handleKeyPress = createKeyHandler(spanElem, content, unbindHandlers);
+    $(document).keypress(handleKeyPress);
+    
+    function stopButtonHandler(e) {
+        console.log('stop button pressed');
+        unbindHandlers();
+        reset(spanElem, content);
+        killHUD();
+    }
+    
+    function skipButtonHandler(e) {
+        nextElem(spanElem, content, unbindHandlers);
+    }
+    
+    
+    $("#ttw-stop-button").click(stopButtonHandler);
+    $("#ttw-skip-button").click(skipButtonHandler);
 }
 
 function nextTextElement(elem) {
@@ -139,12 +169,12 @@ function nextTextElement(elem) {
 
 function firstChildTextNode(elem) {
     var textNodes = $(elem).contents()
-            .filter(function() {
-                return this.nodeType === 3;
-            })
-            .filter(function () {
-                return this.nodeValue.trim().length >= 1;
-            });
+                .filter(function() {
+                  return this.nodeType === 3;
+                })
+                .filter(function () {
+                  return this.nodeValue.trim().length >= 1;
+                });
     return textNodes ? textNodes[0] : false;
 }
 
@@ -172,14 +202,15 @@ function setHUDText(numTyped, numErrors, keysBurst, time) {
     
     var burstwpm = Math.floor(numCharsBurst / WORD_LENGTH / burstTime * 60);
     var wpm = Math.floor(
-        numTyped / WORD_LENGTH / timeSec * 60 - numErrors * ERROR_PENALTY);
+        numTyped / WORD_LENGTH / timeSec * 60 - numErrors / WORD_LENGTH);
     
     console.log(numTyped, numCharsBurst, timeSec, burstTime, burstwpm, wpm);
+    var wordsTyped = Math.floor(numTyped / 5);
     var text =
-        "<div class='reset' id='ttw-hud'>\
+        "<div id='ttw-hud'>\
            <div class='ttw-hud-stat'>\
-               <div class='ttw-inline' id='ttw-hud-num'>"+numTyped+"</div>\
-               <div class='ttw-hud-text'>typed</div>\
+               <div class='ttw-inline' id='ttw-hud-num'>"+wordsTyped+"</div>\
+               <div class='ttw-hud-text'>words typed</div>\
            </div>\
            <div class='ttw-hud-stat'>\
                <div class='ttw-inline' id='ttw-hud-num'>"+numErrors+"</div>\
@@ -194,11 +225,18 @@ function setHUDText(numTyped, numErrors, keysBurst, time) {
                <div class='ttw-hud-text'>wpm</div>\
            </div>\
         </div>";
-    $("#ttw-hud").html(text);
+    $("#ttw-stats").html(text);
 }
 
 function initHUD() {
-    $("<div class='reset-this' id='ttw-hud'></div>").appendTo("body");
+    $("<div id='ttw-hud'>\
+         <div id='ttw-stats'></div>\
+         <div id='ttw-buttons'>\
+           <button type='button' id='ttw-skip-button' class='btn btn-primary'>Skip</button>\
+           <button type='button' id='ttw-stop-button' class='btn btn-danger'>Stop</button>\
+         </div>\
+       </div>").appendTo("body");
+    setHUDText(0,0,0,0);
 }
 
 function killHUD() {
@@ -214,7 +252,7 @@ function setupTest(e) {
         
         $(textNode).unwrap(); // it'll be wrapped in a span from the mousemove
         initHUD();
-        start(textNode);
+        startTyping(textNode);
         return false;
     }
     return true;
