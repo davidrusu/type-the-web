@@ -143,28 +143,22 @@ function startTyping(elem) {
 }
 
 function nextTextElement(elem) {
-    var allTextNodes = [];
-    function findAllTextNodes(node) {
+    function findAllTextNodes(accum, node) {
         if (node.hasChildNodes()) {
-            R.map(findAllTextNodes, node.childNodes);
+            R.map(R.curry(findAllTextNodes)(accum), node.childNodes);
         } else if (node.nodeType == 3 && node.nodeValue.trim().length) {
-            allTextNodes.push(node);
+            accum.push(node);
         }
+        return accum;
     }
-    findAllTextNodes($('body')[0]);
     
-    var rest = R.skipUntil(
-        function (other) {
-            return elem == other;
-        }
-        , allTextNodes
-    );
-    
-    if (rest.length >= 2) {
-        return rest[1];
-    } else {
-        return false;
-    }
+    var allTextNodes = findAllTextNodes([], $('body')[0]);
+    var rest = R.skipUntil(R.eq(elem) , allTextNodes);
+    var index = R.indexOf(elem, allTextNodes);
+    var maybeTextNode = R.ifElse(R.eq(-1),
+                                 R.alwaysFalse,
+                                 R.pipe(R.add(1), R.propOf(allTextNodes)));
+    return maybeTextNode(index);
 }
 
 function firstChildTextNode(elem) {
@@ -182,21 +176,24 @@ function firstChildTextNode(elem) {
     return maybeTextNode(textNodes);
 }
 
-var prevElem;
-function highlightTextNodes(e) {
-    var elem = firstChildTextNode(
-        document.elementFromPoint(e.clientX, e.clientY));
-    
-    if (!Object.is(prevElem, elem)) {
-        if (prevElem) {
-            $(prevElem).unwrap();
-            prevElem = null;
-        }
-        if (elem) {
-            $(elem).wrap("<span class='ttw-selected'></span>");
-            prevElem = elem;
+function createTextNodeHighlighter() {
+    var prevElem;
+    function highlightTextNodes(e) {
+        var elem = firstChildTextNode(
+            document.elementFromPoint(e.clientX, e.clientY));
+        
+        if (!Object.is(prevElem, elem)) {
+            if (prevElem) {
+                $(prevElem).unwrap();
+                prevElem = undefined;
+            }
+            if (elem) {
+                $(elem).wrap("<span class='ttw-selected'></span>");
+                prevElem = elem;
+            }
         }
     }
+    return highlightTextNodes;
 }
 
 function setHUDText(numTyped, numErrors, keysBurst, time) {
@@ -261,6 +258,8 @@ function setupTest(e) {
     }
     return true;
 }
+
+var highlightTextNodes = createTextNodeHighlighter();
     
 $(document).mousemove(highlightTextNodes);
 $(document).click(setupTest);
