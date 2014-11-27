@@ -29,9 +29,11 @@
   color:#3e2723;
   text-align:center;
 }
-
+.ttw-stats {
+    display:inline-block;
+}
 .ttw-hud-stat {
-    text-align:center;
+  text-align:center;
   display:inline-block;
   background: rgba(255,255,255,0.9); /**/
   color:black;
@@ -49,7 +51,6 @@
     right: 10px;
     top: 10px;
     font-size: large;
-    display: inline;
     /*background:  #8bc34a;/*#009688;*/
     padding:3px;
     border-radius: 5px;
@@ -58,6 +59,19 @@
 
 #ttw-hud-num {
     font-size: xx-large;
+}
+
+#ttw-skip-button {
+}
+
+#ttw-stop-button {
+}
+
+#ttw-buttons {
+    position: relative;
+    top:80px;
+    text-align:right;
+    padding:3px;
 }
 
 /* from http://stackoverflow.com/questions/15901030/reset-remove-css-styles-for-element-only */
