@@ -75,7 +75,7 @@
 }
 
 /* from http://stackoverflow.com/questions/15901030/reset-remove-css-styles-for-element-only */
-.reset-this { 
+.reset {
     animation : none;
     animation-delay : 0;
     animation-direction : normal;
