@@ -168,14 +168,18 @@ function nextTextElement(elem) {
 }
 
 function firstChildTextNode(elem) {
-    var textNodes = $(elem).contents()
-                .filter(function() {
-                  return this.nodeType === 3;
-                })
-                .filter(function () {
-                  return this.nodeValue.trim().length >= 1;
-                });
-    return textNodes ? textNodes[0] : false;
+    var notWhiteSpace = R.pipe(R.trim, R.not(R.isEmpty));
+    
+    var textNodes = R.filter(R.and(R.propEq('nodeType', 3),
+                                   R.pipe(R.prop('nodeValue'), 
+                                          notWhiteSpace)),
+                             elem.childNodes);
+    
+    var maybeTextNode = R.ifElse(R.isEmpty,
+                                 R.alwaysFalse,
+                                 R.head);
+    
+    return maybeTextNode(textNodes);
 }
 
 var prevElem;
@@ -232,8 +236,8 @@ function initHUD() {
     $("<div id='ttw-hud'>\
          <div id='ttw-stats'></div>\
          <div id='ttw-buttons'>\
-           <button type='button' id='ttw-skip-button' class='btn btn-primary'>Skip</button>\
-           <button type='button' id='ttw-stop-button' class='btn btn-danger'>Stop</button>\
+           <button id='ttw-skip-button' class='btn btn-primary'>Skip</button>\
+           <button id='ttw-stop-button' class='btn btn-danger'>Stop</button>\
          </div>\
        </div>").appendTo("body");
     setHUDText(0,0,0,0);
