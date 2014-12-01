@@ -72,6 +72,7 @@ function ContentData(element, originalText) {
         if (this.cursorIdx === 0) {
             return;
         }
+        this.setCursorStyle(CharStyle.DEF);
         this.cursorIdx -= 1;
         this.setCursorStyle(CharStyle.CUR);
     };
@@ -162,7 +163,6 @@ function createKeyHandler(contentData, unbindHandlers) {
         contentData.incCursor();
         
         if (contentData.doneTyping()) {
-            alert("You took " + hudStats.timeSoFar() / 1000 + "s");
             nextElem(contentData, unbindHandlers);
         } else {
             contentData.setCursorStyle(CharStyle.CUR);
