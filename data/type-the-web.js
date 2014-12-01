@@ -7,7 +7,6 @@ var CharStyle = {
 
 var BURST_TIME = 10; // burst wpm time interval in seconds
 var WORD_LENGTH = 5; // chars per word
-// var ERROR_PENALTY = 0.5; // how many wpm to take off for every error
 
 function styleCursor(text) {
     return "<span class='ttw-typed' id='ttw-cursor'>" + text + "</span>";
@@ -100,7 +99,8 @@ function ContentData(element, originalText) {
     };
 }
 
-var invalidKey = R.anyPredicates([R.prop('ctrlKey'),
+var invalidKey = R.anyPredicates([R.prop('defaultPrevented'),
+                                  R.prop('ctrlKey'),
                                   R.prop('altKey'),
                                   R.prop('metaKey')]);
 
@@ -117,11 +117,13 @@ function createKeyHandler(contentData, unbindHandlers) {
             return;
         case "Tab":
             nextElem(contentData, unbindHandlers);
+            e.preventDefault();
             return;
         }
         hudStats.currentTime = new Date().getTime();
         hudStats.updateStartTime();
-        hudStats.keyPressed();
+        hudStats.keyPressed();// var ERROR_PENALTY = 0.5; // how many wpm to take off for every error
+
         
         var charCode = (typeof e.which === "number") ? e.which : e.keyCode;
         var typedChar = String.fromCharCode(charCode);
@@ -149,7 +151,7 @@ function createKeyHandler(contentData, unbindHandlers) {
             contentData.renderText();
             setHUDText(hudStats);
         }
-        return false;
+        e.preventDefault();
     }
     contentData.renderText();
     return handleKeyPress;
@@ -287,7 +289,14 @@ function setupTest(e) {
         $(document).unbind("mousemove", highlightTextNodes);
         $(document).unbind("click", setupTest);
         
-        $(textNode).unwrap(); // it'll be wrapped in a span from the mousemove
+        R.forEach(
+            function(element) {
+                var child = element.childNodes[0]; // there will be only one child since only textnodes are selected
+                var parent = element.parentNode;
+                parent.parentNode.replaceChild(child, parent);
+            },
+            document.getElementsByClassName("ttw-selected"));
+        
         initHUD();
         startTyping(textNode);
         return false;
