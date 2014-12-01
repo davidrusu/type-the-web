@@ -68,6 +68,14 @@ function ContentData(element, originalText) {
         this.cursorIdx += 1;
     };
 
+    this.backspace = function() {
+        if (this.cursorIdx === 0) {
+            return;
+        }
+        this.cursorIdx -= 1;
+        this.setCursorStyle(CharStyle.CUR);
+    };
+
     this.doneTyping = function() {
         return this.cursorIdx >= this.originalText.length;
     };
@@ -104,9 +112,13 @@ var invalidKey = R.anyPredicates([R.prop('defaultPrevented'),
                                   R.prop('altKey'),
                                   R.prop('metaKey')]);
 
+function render(contentData, hudStats) {
+    contentData.renderText();
+    setHUDText(hudStats);
+}
+
 function createKeyHandler(contentData, unbindHandlers) {
     var hudStats = new HudStats();
-    
     function handleKeyPress(e) {
         if (invalidKey(e)) {
             return;
@@ -119,7 +131,13 @@ function createKeyHandler(contentData, unbindHandlers) {
             nextElem(contentData, unbindHandlers);
             e.preventDefault();
             return;
+        case "Backspace":
+            contentData.backspace();
+            render(contentData, hudStats);
+            e.preventDefault();
+            return;
         }
+        
         hudStats.currentTime = new Date().getTime();
         hudStats.updateStartTime();
         hudStats.keyPressed();// var ERROR_PENALTY = 0.5; // how many wpm to take off for every error
@@ -148,8 +166,7 @@ function createKeyHandler(contentData, unbindHandlers) {
             nextElem(contentData, unbindHandlers);
         } else {
             contentData.setCursorStyle(CharStyle.CUR);
-            contentData.renderText();
-            setHUDText(hudStats);
+            render(contentData, hudStats);
         }
         e.preventDefault();
     }
