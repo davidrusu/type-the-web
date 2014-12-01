@@ -22,10 +22,6 @@ function styleCorrect(text) {
 }
 
 
-var invalidKey = R.anyPredicates([R.prop('ctrlKey'),
-                                  R.prop('altKey'),
-                                  R.prop('metaKey')]);
-
 function HudStats() {
     this.startTime = -1;
     this.currentTime = -1;
@@ -104,12 +100,24 @@ function ContentData(element, originalText) {
     };
 }
 
+var invalidKey = R.anyPredicates([R.prop('ctrlKey'),
+                                  R.prop('altKey'),
+                                  R.prop('metaKey')]);
+
 function createKeyHandler(contentData, unbindHandlers) {
     var hudStats = new HudStats();
     
     function handleKeyPress(e) {
         if (invalidKey(e)) {
-            return true;
+            return;
+        }
+        switch(e.key) {
+        case "Esc":
+            stop(contentData, unbindHandlers);
+            return;
+        case "Tab":
+            nextElem(contentData, unbindHandlers);
+            return;
         }
         hudStats.currentTime = new Date().getTime();
         hudStats.updateStartTime();
@@ -117,9 +125,9 @@ function createKeyHandler(contentData, unbindHandlers) {
         
         var charCode = (typeof e.which === "number") ? e.which : e.keyCode;
         var typedChar = String.fromCharCode(charCode);
-        
-
-        console.log("keyCode:", e.keyCode, charCode, String.fromCharCode(e.keyCode), String.fromCharCode(charCode));
+        var which = String.fromCharCode(e.which);
+        var keyCode = String.fromCharCode(e.keyCode);
+        console.log("keyCode:", "'",e.which, "'", "'", e.keyCode, "'", e.charCode, "'", which, "'", keyCode, "'");
         
         var cursorChar = contentData.charAtCursor();
         
@@ -158,6 +166,13 @@ function nextElem(contentData, unbindHandlers) {
     }
 }
 
+function stop(contentData, unbindHandlers) {
+    console.log('stop button pressed');
+    unbindHandlers();
+    contentData.resetElement();
+    killHUD();
+}
+
 function startTyping(elem) {
     $(elem).wrap("<span class='ttw'></span>");
     function unbindHandlers() {
@@ -170,10 +185,7 @@ function startTyping(elem) {
     $(document).keypress(handleKeyPress);
     
     function stopButtonHandler(e) {
-        console.log('stop button pressed');
-        unbindHandlers();
-        contentData.resetElement();
-        killHUD();
+        stop(contentData, unbindHandlers);
     }
     
     function skipButtonHandler(e) {
@@ -224,26 +236,6 @@ function firstChildTextNode(elem) {
     return maybeTextNode(textNodes);
 }
 
-function createTextNodeHighlighter() {
-    var prevElem;
-    function highlightTextNodes(e) {
-        var elem = firstChildTextNode(
-            document.elementFromPoint(e.clientX, e.clientY));
-        
-        if (!Object.is(prevElem, elem)) {
-            if (prevElem) {
-                $(prevElem).unwrap();
-                prevElem = undefined;
-            }
-            if (elem) {
-                $(elem).wrap("<span class='ttw-selected'></span>");
-                prevElem = elem;
-            }
-        }
-    }
-    return highlightTextNodes;
-}
-
 function setHUDText(hudStats) {
     var timeSec = hudStats.timeSoFar() / 1000;
     var numCharsBurst = hudStats.keysBurst.length;
@@ -251,7 +243,6 @@ function setHUDText(hudStats) {
     var wpm = Math.floor(
         hudStats.keysTyped / WORD_LENGTH / timeSec * 60 - hudStats.errorsTyped / WORD_LENGTH);
     
-    console.log(hudStats.keysTyped, numCharsBurst, timeSec, BURST_TIME, burstwpm, wpm);
     var wordsTyped = Math.floor(hudStats.keysTyped / 5);
     var text =
         "<div id='ttw-hud'>\
@@ -304,6 +295,27 @@ function setupTest(e) {
     return true;
 }
 
+
+
+function createTextNodeHighlighter() {
+    var prevElem;
+    function highlightTextNodes(e) {
+        var elem = firstChildTextNode(
+            document.elementFromPoint(e.clientX, e.clientY));
+        
+        if (!Object.is(prevElem, elem)) {
+            if (prevElem) {
+                $(prevElem).unwrap();
+                prevElem = undefined;
+            }
+            if (elem) {
+                $(elem).wrap("<span class='ttw-selected'></span>");
+                prevElem = elem;
+            }
+        }
+    }
+    return highlightTextNodes;
+}
 var highlightTextNodes = createTextNodeHighlighter();
     
 $(document).mousemove(highlightTextNodes);
