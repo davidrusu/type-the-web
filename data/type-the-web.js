@@ -9,15 +9,15 @@ var BURST_TIME = 10; // burst wpm time interval in seconds
 var WORD_LENGTH = 5; // chars per word
 
 function styleCursor(text) {
-    return "<span class='ttw-typed' id='ttw-cursor'>" + text + "</span>";
+    return $('<div></div>').append($("<span class='ttw-typed' id='ttw-cursor'></span>").text(text)).html();
 }
 
 function styleWrong(text) {
-    return "<span class='ttw-typed ttw-wrong'>" + text + "</span>";
+    return $('<div></div>').append($("<span class='ttw-typed ttw-wrong'></span>").text(text)).html();
 }
 
 function styleCorrect(text) {
-    return "<span class='ttw-typed ttw-correct'>" + text + "</span>";
+    return $('<div></div>').append($("<span class='ttw-typed ttw-correct'></span>").text(text)).html();
 }
 
 
@@ -82,7 +82,7 @@ function ContentData(element, originalText) {
     };
     
     this.resetElement = function() {
-        $(this.element).html(this.originalText);
+        $(this.element).text(this.originalText);
         var textNode = $(this.element).contents()[0];
         $(textNode).unwrap(); // remove the enclosing span tags
         this.element = textNode;
@@ -141,14 +141,13 @@ function createKeyHandler(contentData, unbindHandlers) {
         
         hudStats.currentTime = new Date().getTime();
         hudStats.updateStartTime();
-        hudStats.keyPressed();// var ERROR_PENALTY = 0.5; // how many wpm to take off for every error
+        hudStats.keyPressed();
 
         
         var charCode = (typeof e.which === "number") ? e.which : e.keyCode;
         var typedChar = String.fromCharCode(charCode);
         var which = String.fromCharCode(e.which);
         var keyCode = String.fromCharCode(e.keyCode);
-        console.log("keyCode:", "'",e.which, "'", "'", e.keyCode, "'", e.charCode, "'", which, "'", keyCode, "'");
         
         var cursorChar = contentData.charAtCursor();
         
@@ -176,7 +175,6 @@ function createKeyHandler(contentData, unbindHandlers) {
 
 
 function nextElem(contentData, unbindHandlers) {
-    console.log('next button pressed');
     unbindHandlers();
     contentData.resetElement();
     var nextElem = nextTextElement(contentData.element);
@@ -186,7 +184,6 @@ function nextElem(contentData, unbindHandlers) {
 }
 
 function stop(contentData, unbindHandlers) {
-    console.log('stop button pressed');
     unbindHandlers();
     contentData.resetElement();
     killHUD();
@@ -308,9 +305,9 @@ function setupTest(e) {
         
         R.forEach(
             function(element) {
-                var child = element.childNodes[0]; // there will be only one child since only textnodes are selected
+                var child = element.childNodes[0];
                 var parent = element.parentNode;
-                parent.parentNode.replaceChild(child, parent);
+                parent.replaceChild(child, element);
             },
             document.getElementsByClassName("ttw-selected"));
         
