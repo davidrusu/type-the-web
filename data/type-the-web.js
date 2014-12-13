@@ -1,12 +1,11 @@
-var CharStyle = {
-    COR: styleCorrect,
-    WRG: styleWrong,
-    CUR: styleCursor,
-    DEF: R.identity
-};
+let CharStyle = { COR: styleCorrect
+                , WRG: styleWrong
+                , CUR: styleCursor
+                , DEF: R.identity
+                };
 
-var BURST_TIME = 10; // burst wpm time interval in seconds
-var WORD_LENGTH = 5; // chars per word
+let BURST_TIME = 10; // burst wpm time interval in seconds
+let WORD_LENGTH = 5; // chars per word
 
 function styleCursor(text) {
     return $('<div></div>').append($("<span class='ttw-typed' id='ttw-cursor'></span>").text(text)).html();
@@ -28,23 +27,21 @@ function HudStats() {
     this.keysTyped = 0;
     this.errorsTyped = 0;
     
-    this.timeSoFar = function() {
-        return this.currentTime - this.startTime;
-    };
+    this.timeSoFar = () => this.currentTime - this.startTime;
     
-    this.updateStartTime = function() {
+    this.updateStartTime = () => {
         if (this.startTime === -1) {
             this.startTime = this.currentTime;
         }
     };
-    
-    this.updateKeysBurst = function () {
+
+    this.updateKeysBurst = () => {
         this.keysBurst =  R.appendTo(R.filter(R.lt(this.currentTime - BURST_TIME * 1000),
                                               this.keysBurst),
                                      this.currentTime);
     };
-    
-    this.keyPressed = function() {
+
+    this.keyPressed = () => {
         this.updateKeysBurst(this.keysBurst, this.currentTime);
         this.keysTyped += 1;
     };
@@ -56,19 +53,18 @@ function ContentData(element, originalText) {
     this.contentStyle = R.concat([CharStyle.CUR], R.repeatN(CharStyle.DEF, this.originalText.length-1));
     this.cursorIdx = 0;
     
-    this.charAtCursor = function() {
-        return this.originalText[this.cursorIdx];
-    };
+    this.charAtCursor = () => this.originalText[this.cursorIdx];
     
-    this.setCursorStyle = function(style) {
+    this.setCursorStyle = (style) => {
+        if (this.doneTyping()) return;
         this.contentStyle[this.cursorIdx] = style;
     };
     
-    this.incCursor = function() {
+    this.incCursor = () => {
         this.cursorIdx += 1;
     };
 
-    this.backspace = function() {
+    this.backspace = () => {
         if (this.cursorIdx === 0) {
             return;
         }
@@ -77,53 +73,45 @@ function ContentData(element, originalText) {
         this.setCursorStyle(CharStyle.CUR);
     };
 
-    this.doneTyping = function() {
-        return this.cursorIdx >= this.originalText.length;
-    };
+    this.doneTyping = () => this.cursorIdx >= this.originalText.length;
     
-    this.resetElement = function() {
+    this.resetElement = () => {
         $(this.element).text(this.originalText);
-        var textNode = $(this.element).contents()[0];
+        let textNode = $(this.element).contents()[0];
         $(textNode).unwrap(); // remove the enclosing span tags
         this.element = textNode;
     };
     
-    this.renderText = function () {
-        function styleLetter(accTriple, pair) {
-            var [result, run, prevStyle] = accTriple;
-            var [letter, style] = pair;
+    this.renderText = () => {
+        let styleLetter = (accTriple, pair) => {
+            let [result, run, prevStyle] = accTriple;
+            let [letter, style] = pair;
             return prevStyle === style ?
                 [result, R.concat(run, letter), style] :
                 [R.concat(result, prevStyle(run)), letter, style];
-        }
+        };
         
-        var [firstChar, firstStyle] = [this.originalText[0], this.contentStyle[0]];
-        var [tailChars, tailStyles] = [R.tail(this.originalText), R.tail(this.contentStyle)];
-        var [result, run, prevStyle] = R.foldl(styleLetter,
+        let [firstChar, firstStyle] = [this.originalText[0], this.contentStyle[0]];
+        let [tailChars, tailStyles] = [R.tail(this.originalText), R.tail(this.contentStyle)];
+        let [result, run, prevStyle] = R.foldl(styleLetter,
                                                ["", firstChar, firstStyle],
                                                R.zip(tailChars, tailStyles));
-
-        var styledContent = R.concat(result, prevStyle(run));
+        
+        let styledContent = R.concat(result, prevStyle(run));
         $(this.element).html(styledContent);
     };
 }
 
-var invalidKey = R.anyPredicates([R.prop('defaultPrevented'),
+let invalidKey = R.anyPredicates([R.prop('defaultPrevented'),
                                   R.prop('ctrlKey'),
                                   R.prop('altKey'),
                                   R.prop('metaKey')]);
 
-function render(contentData, hudStats) {
-    contentData.renderText();
-    setHUDText(hudStats);
-}
-
 function createKeyHandler(contentData, unbindHandlers) {
-    var hudStats = new HudStats();
-    function handleKeyPress(e) {
-        if (invalidKey(e)) {
-            return;
-        }
+    let hudStats = new HudStats();
+    let handleKeyPress = (e) => {
+        if (invalidKey(e)) return;
+        
         switch(e.key) {
         case "Esc":
             stop(contentData, unbindHandlers);
@@ -134,7 +122,8 @@ function createKeyHandler(contentData, unbindHandlers) {
             return;
         case "Backspace":
             contentData.backspace();
-            render(contentData, hudStats);
+            setHUDText(hudStats);
+            contentData.renderText();
             e.preventDefault();
             return;
         }
@@ -143,15 +132,11 @@ function createKeyHandler(contentData, unbindHandlers) {
         hudStats.updateStartTime();
         hudStats.keyPressed();
 
+        let charCode = (typeof e.which === "number") ? e.which : e.keyCode;
+        let typedChar = String.fromCharCode(charCode);
+        let cursorChar = contentData.charAtCursor();
         
-        var charCode = (typeof e.which === "number") ? e.which : e.keyCode;
-        var typedChar = String.fromCharCode(charCode);
-        var which = String.fromCharCode(e.which);
-        var keyCode = String.fromCharCode(e.keyCode);
-        
-        var cursorChar = contentData.charAtCursor();
-        
-        var charStyle;
+        let charStyle;
         if (cursorChar === typedChar) {
             charStyle = CharStyle.COR;
         } else {
@@ -161,15 +146,16 @@ function createKeyHandler(contentData, unbindHandlers) {
         contentData.setCursorStyle(charStyle);
         contentData.incCursor();
         
+        contentData.setCursorStyle(CharStyle.CUR);
+        setHUDText(hudStats);
         if (contentData.doneTyping()) {
             nextElem(contentData, unbindHandlers);
         } else {
-            contentData.setCursorStyle(CharStyle.CUR);
-            render(contentData, hudStats);
+            contentData.renderText();
         }
         e.preventDefault();
-    }
-    contentData.renderText();
+    };
+    
     return handleKeyPress;
 }
 
@@ -191,37 +177,41 @@ function stop(contentData, unbindHandlers) {
 
 function startTyping(elem) {
     $(elem).wrap("<span class='ttw'></span>");
-    function unbindHandlers() {
+    let unbindHandlers = () => {
         $(document).unbind('keypress', handleKeyPress);
         $('#ttw-skip-button').unbind('click', skipButtonHandler);
         $('#ttw-stop-button').unbind('click', stopButtonHandler);
-    }
-    var contentData = new ContentData($(elem).parent(), elem.nodeValue);
-    var handleKeyPress = createKeyHandler(contentData, unbindHandlers);
+    };
+    
+    let contentData = new ContentData($(elem).parent(), elem.nodeValue);
+    let handleKeyPress = createKeyHandler(contentData, unbindHandlers);
+    contentData.renderText();
+    
     $(document).keypress(handleKeyPress);
     
-    function stopButtonHandler(e) {
+    let stopButtonHandler = (e) => {
         stop(contentData, unbindHandlers);
-    }
+    };
     
-    function skipButtonHandler(e) {
+    let skipButtonHandler = (e) => {
         nextElem(contentData, unbindHandlers);
         $('#ttw-skip-button').blur();
-    }
+    };
     
     $("#ttw-stop-button").click(stopButtonHandler);
     $("#ttw-skip-button").click(skipButtonHandler);
 }
 
 function findAllTextNodes() {
-    var textNodes = (function recurse(accum, node) {     
+    let recurse = R.curry((accum, node) => {     
         if (node.hasChildNodes()) {
-            R.map(R.curry(recurse)(accum), node.childNodes);
+            R.map(recurse(accum), node.childNodes);
         } else if (node.nodeType == 3 && node.nodeValue.trim().length) {
             accum.push(node);
         }
         return accum;
-    })([], $('body')[0]);
+    });
+    var textNodes = recurse([], $('body')[0]);
     return textNodes;
 }
 
@@ -233,7 +223,7 @@ function nextTextElement(elem) {
         textNodes[index + 1];
 }
 
-function firstChildTextNode(elem) {
+function firstTextNode(elem) {
     var notWhiteSpace = R.pipe(R.trim, R.not(R.isEmpty));
 
     function notWhitespace(string) {
@@ -247,7 +237,7 @@ function firstChildTextNode(elem) {
                              elem.childNodes);
     
     var maybeTextNode = R.ifElse(R.isEmpty,
-                                 R.alwaysFalse,
+                                 R.always(undefined),
                                  R.head);
     return maybeTextNode(textNodes);
 }
@@ -297,7 +287,7 @@ function killHUD() {
 }
 
 function setupTest(e) {
-    var textNode = firstChildTextNode(
+    var textNode = firstTextNode(
         document.elementFromPoint(e.clientX, e.clientY));
     if (textNode) {
         $(document).unbind("mousemove", highlightTextNodes);
@@ -322,22 +312,19 @@ function setupTest(e) {
 
 function createTextNodeHighlighter() {
     var prevElem;
-    function highlightTextNodes(e) {
-        var elem = firstChildTextNode(
+    return (e) => {
+        let elem = firstTextNode(
             document.elementFromPoint(e.clientX, e.clientY));
+
+        if (elem === undefined || Object.is(prevElem, elem)) return;
         
-        if (!Object.is(prevElem, elem)) {
-            if (prevElem) {
-                $(prevElem).unwrap();
-                prevElem = undefined;
-            }
-            if (elem) {
-                $(elem).wrap("<span class='ttw-selected'></span>");
-                prevElem = elem;
-            }
+        if (prevElem) {
+            $(prevElem).unwrap();
         }
-    }
-    return highlightTextNodes;
+        
+        $(elem).wrap("<span class='ttw-selected'></span>");
+        prevElem = elem;
+    };
 }
 var highlightTextNodes = createTextNodeHighlighter();
     
