@@ -8,17 +8,16 @@ let BURST_TIME = 10; // burst wpm time interval in seconds
 let WORD_LENGTH = 5; // chars per word
 
 function styleCursor(text) {
-    return $('<div></div>').append($("<span class='ttw-typed' id='ttw-cursor'></span>").text(text)).html();
+    return $("<span class='ttw-typed' id='ttw-cursor'></span>").text(text)[0].outerHTML;
 }
 
 function styleWrong(text) {
-    return $('<div></div>').append($("<span class='ttw-typed ttw-wrong'></span>").text(text)).html();
+    return $("<span class='ttw-typed ttw-wrong'></span>").text(text)[0].outerHTML;
 }
 
 function styleCorrect(text) {
-    return $('<div></div>').append($("<span class='ttw-typed ttw-correct'></span>").text(text)).html();
+    return $("<span class='ttw-typed ttw-correct'></span>").text(text)[0].outerHTML;
 }
-
 
 function HudStats() {
     this.startTime = -1;
