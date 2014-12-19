@@ -14,7 +14,6 @@ $("#ttw-stop-button").click(stopButtonHandler);
 $("#ttw-skip-button").click(skipButtonHandler);
 
 self.port.on("ttw-stats-updated", (hudStats) => {
-    console.log(hudStats);
     var timeSec = hudStats.timeSoFar / 1000;
     var numCharsBurst = hudStats.keysBurst.length;
     var burstwpm = Math.floor(numCharsBurst / WORD_LENGTH / BURST_TIME * 60);
