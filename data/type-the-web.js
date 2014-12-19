@@ -6,6 +6,9 @@ let CharStyle = { COR: styleCorrect
 
 let BURST_TIME = 10; // burst wpm time interval in seconds
 let WORD_LENGTH = 5; // chars per word
+let contentData = undefined;
+let unbindHandlers = () => $(document).unbind('keypress', handleKeyPress);
+let handleKeyPress = createKeyHandler();
 
 function styleCursor(text) {
     return $("<span class='ttw-typed' id='ttw-cursor'></span>").text(text)[0].outerHTML;
@@ -117,17 +120,17 @@ let invalidKey = R.anyPredicates([R.prop('defaultPrevented'),
                                   R.prop('altKey'),
                                   R.prop('metaKey')]);
 
-function createKeyHandler(contentData, unbindHandlers) {
+function createKeyHandler() {
     let hudStats = new HudStats();
     let handleKeyPress = (e) => {
         if (invalidKey(e)) return;
         
         switch(e.key) {
         case "Esc":
-            stop(contentData, unbindHandlers);
+            stop();
             return;
         case "Tab":
-            nextElem(contentData, unbindHandlers);
+            nextElem();
             e.preventDefault();
             return;
         case "Backspace":
@@ -159,7 +162,7 @@ function createKeyHandler(contentData, unbindHandlers) {
         contentData.setCursorStyle(CharStyle.CUR);
         setHUDText(hudStats);
         if (contentData.doneTyping()) {
-            nextElem(contentData, unbindHandlers);
+            nextElem();
         } else {
             contentData.renderText();
         }
@@ -170,46 +173,25 @@ function createKeyHandler(contentData, unbindHandlers) {
 }
 
 
-function nextElem(contentData, unbindHandlers) {
-    unbindHandlers();
-    contentData.resetElement();
+function nextElem() {
+    stop();
     var nextElem = nextTextElement(contentData.element);
     if (nextElem) {
         startTyping(nextElem);
     }
 }
 
-function stop(contentData, unbindHandlers) {
+function stop() {
     unbindHandlers();
     contentData.resetElement();
-    killHUD();
 }
 
 function startTyping(elem) {
     $(elem).wrap("<span class='ttw'></span>");
-    let unbindHandlers = () => {
-        $(document).unbind('keypress', handleKeyPress);
-        $('#ttw-skip-button').unbind('click', skipButtonHandler);
-        $('#ttw-stop-button').unbind('click', stopButtonHandler);
-    };
-    
-    let contentData = new ContentData($(elem).parent(), elem.nodeValue);
-    let handleKeyPress = createKeyHandler(contentData, unbindHandlers);
+    contentData = new ContentData($(elem).parent(), elem.nodeValue);
     contentData.renderText();
     
     $(document).keypress(handleKeyPress);
-    
-    let stopButtonHandler = (e) => {
-        stop(contentData, unbindHandlers);
-    };
-    
-    let skipButtonHandler = (e) => {
-        nextElem(contentData, unbindHandlers);
-        $('#ttw-skip-button').blur();
-    };
-    
-    $("#ttw-stop-button").click(stopButtonHandler);
-    $("#ttw-skip-button").click(skipButtonHandler);
 }
 
 function findAllTextNodes() {
@@ -254,49 +236,6 @@ function firstTextNode(elem) {
 
 function setHUDText(hudStats) {
     self.port.emit("ttw-stats-updated", hudStats.serialize());
-    return;
-    var timeSec = hudStats.timeSoFar() / 1000;
-    var numCharsBurst = hudStats.keysBurst.length;
-    var burstwpm = Math.floor(numCharsBurst / WORD_LENGTH / BURST_TIME * 60);
-    var wpm = Math.floor(
-        hudStats.keysTyped / WORD_LENGTH / timeSec * 60 - hudStats.errorsTyped / WORD_LENGTH);
-    
-    var wordsTyped = Math.floor(hudStats.keysTyped / 5);
-    var text =
-        "<div id='ttw-hud'>\
-           <div class='ttw-hud-stat'>\
-               <div class='ttw-inline' id='ttw-hud-num'>"+wordsTyped+"</div>\
-               <div class='ttw-hud-text'>words typed</div>\
-           </div>\
-           <div class='ttw-hud-stat'>\
-               <div class='ttw-inline' id='ttw-hud-num'>"+hudStats.errorsTyped+"</div>\
-               <div class='ttw-hud-text'>errors</div>\
-           </div>\
-           <div class='ttw-hud-stat'>\
-               <div class='ttw-inline' id='ttw-hud-num'>"+burstwpm+"</div>\
-               <div class='ttw-hud-text'>burst wpm</div>\
-           </div>\
-           <div class='ttw-hud-stat'>\
-               <div class='ttw-inline' id='ttw-hud-num'>"+wpm+"</div>\
-               <div class='ttw-hud-text'>wpm</div>\
-           </div>\
-        </div>";
-    $("#ttw-stats").html(text);
-}
-
-function initHUD() {
-    return;
-    $("<div id='ttw-hud'>\
-         <div id='ttw-stats'></div>\
-         <div id='ttw-buttons'>\
-           <button id='ttw-skip-button' class='btn btn-primary'>Skip</button>\
-           <button id='ttw-stop-button' class='btn btn-danger'>Stop</button>\
-         </div>\
-       </div>").appendTo("body");
-}
-
-function killHUD() {
-    $("#ttw-hud").remove();
 }
 
 function setupTest(e) {
@@ -314,7 +253,6 @@ function setupTest(e) {
             },
             document.getElementsByClassName("ttw-selected"));
         
-        initHUD();
         startTyping(textNode);
         return false;
     }
@@ -337,9 +275,11 @@ function createTextNodeHighlighter() {
         prevElem = elem;
     };
 }
+
 var highlightTextNodes = createTextNodeHighlighter();
     
 $(document).mousemove(highlightTextNodes);
 $(document).click(setupTest);
 
-self.port.on('stop', () => {});
+self.port.on('stop', () => stop());
+self.port.on('skip', () => nextElem());
