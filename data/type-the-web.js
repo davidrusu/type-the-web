@@ -44,6 +44,17 @@ function HudStats() {
         this.updateKeysBurst(this.keysBurst, this.currentTime);
         this.keysTyped += 1;
     };
+
+    this.serialize = () => {
+        return {
+            "startTime": this.startTime,
+            "currentTime": this.currentTime,
+            "keysBurst": this.keysBurst,
+            "keysTyped": this.keysTyped,
+            "errorsTyped": this.errorsTyped,
+            "timeSoFar": this.timeSoFar()
+        };
+    };
 }
 
 function ContentData(element, originalText) {
@@ -242,6 +253,8 @@ function firstTextNode(elem) {
 }
 
 function setHUDText(hudStats) {
+    self.port.emit("ttw-stats-updated", hudStats.serialize());
+    return;
     var timeSec = hudStats.timeSoFar() / 1000;
     var numCharsBurst = hudStats.keysBurst.length;
     var burstwpm = Math.floor(numCharsBurst / WORD_LENGTH / BURST_TIME * 60);
@@ -272,6 +285,7 @@ function setHUDText(hudStats) {
 }
 
 function initHUD() {
+    return;
     $("<div id='ttw-hud'>\
          <div id='ttw-stats'></div>\
          <div id='ttw-buttons'>\
@@ -307,8 +321,6 @@ function setupTest(e) {
     return true;
 }
 
-
-
 function createTextNodeHighlighter() {
     var prevElem;
     return (e) => {
@@ -329,3 +341,5 @@ var highlightTextNodes = createTextNodeHighlighter();
     
 $(document).mousemove(highlightTextNodes);
 $(document).click(setupTest);
+
+self.port.on('stop', () => {});
