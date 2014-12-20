@@ -4,8 +4,6 @@ let CharStyle = { COR: styleCorrect
                 , DEF: R.identity
                 };
 
-let BURST_TIME = 10; // burst wpm time interval in seconds
-let WORD_LENGTH = 5; // chars per word
 let contentData = undefined;
 let unbindHandlers = () => $(document).unbind('keypress', handleKeyPress);
 let handleKeyPress = createKeyHandler();
@@ -38,7 +36,7 @@ function HudStats() {
     };
 
     this.updateKeysBurst = () => {
-        this.keysBurst =  R.appendTo(R.filter(R.lt(this.currentTime - BURST_TIME * 1000),
+        this.keysBurst =  R.appendTo(R.filter(R.lt(this.currentTime - CONSTANTS.BURST_TIME * 1000),
                                               this.keysBurst),
                                      this.currentTime);
     };
@@ -93,6 +91,7 @@ function ContentData(element, originalText) {
         let textNode = $(this.element).contents()[0];
         $(textNode).unwrap(); // remove the enclosing span tags
         this.element = textNode;
+        console.log(this.element.outerHTML);
     };
     
     this.renderText = () => {
@@ -115,7 +114,7 @@ function ContentData(element, originalText) {
     };
 }
 
-let invalidKey = R.anyPredicates([R.prop('defaultPrevented'),
+let invalidKey = R.anyPredicates([//R.prop('defaultPrevented'),
                                   R.prop('ctrlKey'),
                                   R.prop('altKey'),
                                   R.prop('metaKey')]);
@@ -127,7 +126,8 @@ function createKeyHandler() {
         
         switch(e.key) {
         case "Esc":
-            stop();
+            self.port.emit('stopping');
+            //stop();
             return;
         case "Tab":
             nextElem();

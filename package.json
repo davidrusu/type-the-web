@@ -1,9 +1,9 @@
 {
-  "name": "my-addon",
-  "title": "my-addon",
+  "name": "type-the-web",
+  "title": "type-the-web",
   "id": "jid1-AgBHTcSNPouipw",
-  "description": "a basic add-on",
-  "author": "",
+  "description": "Practice your typing as you browse the web",
+  "author": "David Rusu",
   "license": "MPL 2.0",
   "version": "0.1"
 }
