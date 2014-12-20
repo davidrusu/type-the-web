@@ -91,7 +91,6 @@ function ContentData(element, originalText) {
         let textNode = $(this.element).contents()[0];
         $(textNode).unwrap(); // remove the enclosing span tags
         this.element = textNode;
-        console.log(this.element.outerHTML);
     };
     
     this.renderText = () => {
