@@ -5,7 +5,11 @@ let CharStyle = { COR: styleCorrect
                 };
 
 let contentData = undefined;
-let unbindHandlers = () => $(document).unbind('keypress', handleKeyPress);
+let unbindHandlers = () => {
+    $(document).unbind("mousemove", highlightTextNodes);
+    $(document).unbind("click", setupTest);
+    $(document).unbind('keypress', handleKeyPress);
+};
 let handleKeyPress = createKeyHandler();
 
 function styleCursor(text) {
@@ -182,7 +186,11 @@ function nextElem() {
 
 function stop() {
     unbindHandlers();
-    contentData.resetElement();
+    R.forEach((e) => e.parentNode.replaceChild(e.childNodes[0], e),
+              document.getElementsByClassName("ttw-selected"));
+    if (contentData) {
+        contentData.resetElement();
+    }
 }
 
 function startTyping(elem) {
@@ -209,28 +217,21 @@ function findAllTextNodes() {
 function nextTextElement(elem) {
     var textNodes = findAllTextNodes();
     var index = R.indexOf(elem, textNodes);
-    return index === -1 && index < textNodes.length-1?
-        false :
-        textNodes[index + 1];
+    
+    if (index === -1 && index < textNodes.length-1) {
+        return false;
+    } else {
+        return textNodes[index + 1];
+    }
 }
 
 function firstTextNode(elem) {
-    var notWhiteSpace = R.pipe(R.trim, R.not(R.isEmpty));
-
-    function notWhitespace(string) {
-        return string.trim().length >= 1;
-    }
-    
-    
-    var textNodes = R.filter(R.and(R.propEq('nodeType', 3),
+    let notWhiteSpace = R.pipe(R.trim, R.not(R.isEmpty));
+    let textNodes = R.filter(R.and(R.propEq('nodeType', 3),
                                    R.pipe(R.prop('nodeValue'), 
                                           notWhiteSpace)),
                              elem.childNodes);
-    
-    var maybeTextNode = R.ifElse(R.isEmpty,
-                                 R.always(undefined),
-                                 R.head);
-    return maybeTextNode(textNodes);
+    return R.isEmpty(textNodes) ? undefined : textNodes[0];
 }
 
 function setHUDText(hudStats) {
@@ -241,24 +242,13 @@ function setupTest(e) {
     var textNode = firstTextNode(
         document.elementFromPoint(e.clientX, e.clientY));
     if (textNode) {
-        $(document).unbind("mousemove", highlightTextNodes);
-        $(document).unbind("click", setupTest);
-        
-        R.forEach(
-            function(element) {
-                var child = element.childNodes[0];
-                var parent = element.parentNode;
-                parent.replaceChild(child, element);
-            },
-            document.getElementsByClassName("ttw-selected"));
-        
+        stop();
         startTyping(textNode);
-        return false;
+        e.preventDefault();
     }
-    return true;
 }
 
-function createTextNodeHighlighter() {
+var highlightTextNodes = (() => {
     var prevElem;
     return (e) => {
         let elem = firstTextNode(
@@ -273,9 +263,7 @@ function createTextNodeHighlighter() {
         $(elem).wrap("<span class='ttw-selected'></span>");
         prevElem = elem;
     };
-}
-
-var highlightTextNodes = createTextNodeHighlighter();
+})();
     
 $(document).mousemove(highlightTextNodes);
 $(document).click(setupTest);
