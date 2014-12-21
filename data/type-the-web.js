@@ -1,27 +1,58 @@
-let CharStyle = { COR: styleCorrect
-                , WRG: styleWrong
-                , CUR: styleCursor
+// This is the styles we will be applying to the text
+// as they are typed
+const CharStyle = { COR: (text) => $("<span class='ttw-typed ttw-correct'></span>").text(text)[0].outerHTML
+                , WRG: (text) => $("<span class='ttw-typed ttw-wrong'></span>").text(text)[0].outerHTML
+                , CUR: (text) => $("<span class='ttw-typed' id='ttw-cursor'></span>").text(text)[0].outerHTML
                 , DEF: R.identity
                 };
 
-let contentData = undefined;
-let unbindHandlers = () => {
+let contentData = undefined; // set when the user selects a block of text
+
+const handleKeyPress = createKeyHandler();
+
+const unbindHandlers = () => {
     $(document).unbind("mousemove", highlightTextNodes);
     $(document).unbind("click", setupTest);
     $(document).unbind('keypress', handleKeyPress);
 };
-let handleKeyPress = createKeyHandler();
 
-function styleCursor(text) {
-    return $("<span class='ttw-typed' id='ttw-cursor'></span>").text(text)[0].outerHTML;
-}
 
-function styleWrong(text) {
-    return $("<span class='ttw-typed ttw-wrong'></span>").text(text)[0].outerHTML;
-}
 
-function styleCorrect(text) {
-    return $("<span class='ttw-typed ttw-correct'></span>").text(text)[0].outerHTML;
+let invalidKey = R.anyPredicates([R.prop('ctrlKey'),
+                                  R.prop('altKey'),
+                                  R.prop('metaKey')]);
+
+function createKeyHandler() {
+    let hudStats = new HudStats();
+    return (e) => {
+        if (invalidKey(e)) return;
+
+        e.preventDefault();
+        switch(e.key) {
+        case "Esc":
+            self.port.emit('stopping');
+            break;
+        case "Tab":
+            nextElem();
+            break;
+        case "Backspace":
+            contentData.backspace();
+            setHUDText(hudStats);
+            contentData.renderText();
+            break;
+        default:
+            let charStyle = hudStats.newKeyEvent(e, contentData.charAtCursor());
+            setHUDText(hudStats);
+            
+            contentData.setCursorStyle(charStyle);
+            contentData.incCursor();
+            if (contentData.doneTyping()) {
+                nextElem();
+            } else {
+                contentData.renderText();
+            }
+        }
+    };
 }
 
 function HudStats() {
@@ -50,15 +81,30 @@ function HudStats() {
         this.keysTyped += 1;
     };
 
+    /** Updates the statistics given the new key event */
+    this.newKeyEvent = (e, cursorChar) => {
+        this.currentTime = new Date().getTime();
+        this.updateStartTime();
+        this.keyPressed();
+        
+        let charCode = (typeof e.which === "number") ? e.which : e.keyCode;
+        let typedChar = String.fromCharCode(charCode);
+        
+        let charStyle;
+        if (cursorChar === typedChar) {
+            charStyle = CharStyle.COR;
+        } else {
+            charStyle = CharStyle.WRG;
+            this.errorsTyped += 1;
+        }
+        return charStyle;
+    };
+
+    /** converts the object into a serializeable form */
     this.serialize = () => {
-        return {
-            "startTime": this.startTime,
-            "currentTime": this.currentTime,
-            "keysBurst": this.keysBurst,
-            "keysTyped": this.keysTyped,
-            "errorsTyped": this.errorsTyped,
-            "timeSoFar": this.timeSoFar()
-        };
+        let clone = R.cloneDeep(this);
+        clone.timeSoFar = this.timeSoFar();
+        return clone;
     };
 }
 
@@ -77,12 +123,12 @@ function ContentData(element, originalText) {
     
     this.incCursor = () => {
         this.cursorIdx += 1;
+        this.setCursorStyle(CharStyle.CUR);
     };
 
     this.backspace = () => {
-        if (this.cursorIdx === 0) {
-            return;
-        }
+        if (this.cursorIdx === 0) return;
+        
         this.setCursorStyle(CharStyle.DEF);
         this.cursorIdx -= 1;
         this.setCursorStyle(CharStyle.CUR);
@@ -116,65 +162,6 @@ function ContentData(element, originalText) {
         $(this.element).html(styledContent);
     };
 }
-
-let invalidKey = R.anyPredicates([//R.prop('defaultPrevented'),
-                                  R.prop('ctrlKey'),
-                                  R.prop('altKey'),
-                                  R.prop('metaKey')]);
-
-function createKeyHandler() {
-    let hudStats = new HudStats();
-    let handleKeyPress = (e) => {
-        if (invalidKey(e)) return;
-        
-        switch(e.key) {
-        case "Esc":
-            self.port.emit('stopping');
-            //stop();
-            return;
-        case "Tab":
-            nextElem();
-            e.preventDefault();
-            return;
-        case "Backspace":
-            contentData.backspace();
-            setHUDText(hudStats);
-            contentData.renderText();
-            e.preventDefault();
-            return;
-        }
-        
-        hudStats.currentTime = new Date().getTime();
-        hudStats.updateStartTime();
-        hudStats.keyPressed();
-
-        let charCode = (typeof e.which === "number") ? e.which : e.keyCode;
-        let typedChar = String.fromCharCode(charCode);
-        let cursorChar = contentData.charAtCursor();
-        
-        let charStyle;
-        if (cursorChar === typedChar) {
-            charStyle = CharStyle.COR;
-        } else {
-            charStyle = CharStyle.WRG;
-            hudStats.errorsTyped += 1;
-        }
-        contentData.setCursorStyle(charStyle);
-        contentData.incCursor();
-        
-        contentData.setCursorStyle(CharStyle.CUR);
-        setHUDText(hudStats);
-        if (contentData.doneTyping()) {
-            nextElem();
-        } else {
-            contentData.renderText();
-        }
-        e.preventDefault();
-    };
-    
-    return handleKeyPress;
-}
-
 
 function nextElem() {
     stop();
@@ -239,16 +226,20 @@ function setHUDText(hudStats) {
 }
 
 function setupTest(e) {
+    e.preventDefault();
     var textNode = firstTextNode(
         document.elementFromPoint(e.clientX, e.clientY));
-    if (textNode) {
-        stop();
-        startTyping(textNode);
-        e.preventDefault();
-    }
+
+    if (textNode === undefined) return;
+
+    stop();
+    startTyping(textNode);
 }
 
-var highlightTextNodes = (() => {
+$(document).click(setupTest);
+
+/** need to have a reference to this handler for when we unbind */
+let highlightTextNodes = (() => {
     var prevElem;
     return (e) => {
         let elem = firstTextNode(
@@ -264,9 +255,8 @@ var highlightTextNodes = (() => {
         prevElem = elem;
     };
 })();
-    
-$(document).mousemove(highlightTextNodes);
-$(document).click(setupTest);
 
-self.port.on('stop', () => stop());
-self.port.on('skip', () => nextElem());
+$(document).mousemove(highlightTextNodes);
+
+self.port.on('stop', stop);
+self.port.on('skip', nextElem);
