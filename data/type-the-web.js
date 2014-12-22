@@ -251,7 +251,7 @@ let highlightTextNodes = (() => {
             $(prevElem).unwrap();
         }
         
-        $(elem).wrap("<span class='ttw-selected'></span>");
+        $(elem).wrap("<span class='ttw-selected ttw'></span>");
         prevElem = elem;
     };
 })();
