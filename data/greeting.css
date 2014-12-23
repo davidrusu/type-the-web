@@ -1,0 +1,30 @@
+#greeting {
+    line-height: 1;
+    font-size: x-large;
+    font-family: "Courier New", Courier, monospace
+}
+
+#keybindings {
+    border: solid #aaaaaa 1px;
+    border-radius: 10px;
+    background-color: #263238;
+    color: white;
+    font-weight: bold;
+    font-size: large;
+    margin: 30px;
+}
+
+#instructions {
+    
+}
+table {
+    text-align: center;
+}
+
+td,th {
+    border: solid #aaaaaa 1px;
+}
+
+p {
+    margin: 10px;
+}
