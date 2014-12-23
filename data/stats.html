@@ -3,6 +3,7 @@
     <link href="stats.css" type="text/css" rel="stylesheet">
     <script type="text/javascript" src="jquery-2.1.1.min.js"></script>
     <script type="text/javascript" src="constants.js"></script>
+    <script type="text/javascript" src="Chart.min.js"></script>
   </head>
   <body>
     <script type="text/javascript" src="stats.js"></script>
@@ -10,20 +11,21 @@
       <div id='ttw-hud'>
         <div class='ttw-hud-stat'>
           <div class='ttw-hud-num' id='errors'></div>
-          <div class='ttw-hud-text'>errors</div>
+          <div class='ttw-hud-text' id='errors-text'>errors</div>
         </div>
         <br>
         <div class='ttw-hud-stat'>
           <div class='ttw-hud-num' id='burst'></div>
-          <div class='ttw-hud-text'>burst wpm</div>
+          <div class='ttw-hud-text' id="burst-text">burst wpm</div>
         </div>
         <br>
         <div class='ttw-hud-stat'>
           <div class= 'ttw-hud-num' id='wpm'></div>
-          <div class='ttw-hud-text'>wpm</div>
+          <div class='ttw-hud-text' id="wpm-text">wpm</div>
         </div>
         <br>
       </div>
     </div>
+    <canvas id="wpm-chart" width="400" height="400"></canvas>
   </body>
 </html>
