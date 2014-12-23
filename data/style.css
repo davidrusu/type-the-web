@@ -1,7 +1,8 @@
 .ttw {
     background-color: rgba(240, 220,200); /*#d7ccc8;*/
     color: #757575;
-    font-family: "Courier New", Courier, monospace
+    font-family: "Courier New", Courier, monospace;
+    font-size: large;
 }
 
 .ttw-typed {
