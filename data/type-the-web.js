@@ -1,10 +1,10 @@
 // This is the styles we will be applying to the text
 // as they are typed
-const CharStyle = { COR: (text) => $("<span class='ttw-typed ttw-correct'></span>").text(text)[0].outerHTML
-                , WRG: (text) => $("<span class='ttw-typed ttw-wrong'></span>").text(text)[0].outerHTML
-                , CUR: (text) => $("<span class='ttw-typed' id='ttw-cursor'></span>").text(text)[0].outerHTML
-                , DEF: R.identity
-                };
+const CharStyle = Object.freeze({ COR: (text) => $("<span class='ttw-typed ttw-correct'></span>").text(text)[0].outerHTML
+                                , WRG: (text) => $("<span class='ttw-typed ttw-wrong'></span>").text(text)[0].outerHTML
+                                , CUR: (text) => $("<span class='ttw-typed' id='ttw-cursor'></span>").text(text)[0].outerHTML
+                                , DEF: R.identity
+                                });
 
 let contentData = undefined; // set when the user selects a block of text
 
@@ -15,8 +15,6 @@ const unbindHandlers = () => {
     $(document).unbind("click", setupTest);
     $(document).unbind('keypress', handleKeyPress);
 };
-
-
 
 let invalidKey = R.anyPredicates([R.prop('ctrlKey'),
                                   R.prop('altKey'),
@@ -41,10 +39,8 @@ function createKeyHandler() {
             contentData.renderText();
             break;
         default:
-            let charStyle = hudStats.newKeyEvent(e, contentData.charAtCursor());
+            hudStats.newKeyEvent(e, contentData);
             setHUDText(hudStats);
-            
-            contentData.setCursorStyle(charStyle);
             contentData.incCursor();
             if (contentData.doneTyping()) {
                 nextElem();
@@ -82,7 +78,7 @@ function HudStats() {
     };
 
     /** Updates the statistics given the new key event */
-    this.newKeyEvent = (e, cursorChar) => {
+    this.newKeyEvent = (e, contentData) => {
         this.currentTime = new Date().getTime();
         this.updateStartTime();
         this.keyPressed();
@@ -90,14 +86,13 @@ function HudStats() {
         let charCode = (typeof e.which === "number") ? e.which : e.keyCode;
         let typedChar = String.fromCharCode(charCode);
         
-        let charStyle;
+        let cursorChar = contentData.charAtCursor();
         if (cursorChar === typedChar) {
-            charStyle = CharStyle.COR;
+            contentData.setCursorCorrect();
         } else {
-            charStyle = CharStyle.WRG;
+            contentData.setCursorWrong();
             this.errorsTyped += 1;
         }
-        return charStyle;
     };
 
     /** converts the object into a serializeable form */
@@ -110,28 +105,34 @@ function HudStats() {
 
 function ContentData(element, originalText) {
     this.element = element;
-    this.originalText = originalText;
-    this.contentStyle = R.concat([CharStyle.CUR], R.repeatN(CharStyle.DEF, this.originalText.length-1));
+    this.originalText = originalText; // the unmodified text from the TextNode we are typing.
+    // styleMap is a list of functions that will be applied to the originalText to show errors, cursor...
+    // at first we have everything with a default style except for the first character which is the cursor
+    this.styleMap = R.concat([CharStyle.CUR], R.repeatN(CharStyle.DEF, this.originalText.length-1));
     this.cursorIdx = 0;
     
     this.charAtCursor = () => this.originalText[this.cursorIdx];
+
     
-    this.setCursorStyle = (style) => {
+    this._setCursorStyle = (style) => {
         if (this.doneTyping()) return;
-        this.contentStyle[this.cursorIdx] = style;
+        this.styleMap[this.cursorIdx] = style;
     };
+    this.setCursorCorrect = () => this._setCursorStyle(CharStyle.COR);
+    this.setCursorWrong = () => this._setCursorStyle(CharStyle.WRG);
+    this.setCursorDefault = () => this._setCursorStyle(CharStyle.DEF);
+    this.setCursorCursor = () => this._setCursorStyle(CharStyle.CUR);
     
     this.incCursor = () => {
         this.cursorIdx += 1;
-        this.setCursorStyle(CharStyle.CUR);
+        this.setCursorCursor();
     };
 
     this.backspace = () => {
         if (this.cursorIdx === 0) return;
-        
-        this.setCursorStyle(CharStyle.DEF);
+        this.setCursorDefault();
         this.cursorIdx -= 1;
-        this.setCursorStyle(CharStyle.CUR);
+        this.setCursorCursor();
     };
 
     this.doneTyping = () => this.cursorIdx >= this.originalText.length;
@@ -144,22 +145,23 @@ function ContentData(element, originalText) {
     };
     
     this.renderText = () => {
-        let styleLetter = (accTriple, pair) => {
-            let [result, run, prevStyle] = accTriple;
-            let [letter, style] = pair;
-            return prevStyle === style ?
-                [result, R.concat(run, letter), style] :
-                [R.concat(result, prevStyle(run)), letter, style];
-        };
-        
-        let [firstChar, firstStyle] = [this.originalText[0], this.contentStyle[0]];
-        let [tailChars, tailStyles] = [R.tail(this.originalText), R.tail(this.contentStyle)];
-        let [result, run, prevStyle] = R.foldl(styleLetter,
-                                               ["", firstChar, firstStyle],
-                                               R.zip(tailChars, tailStyles));
-        
-        let styledContent = R.concat(result, prevStyle(run));
-        $(this.element).html(styledContent);
+        // styleMap is a list of functions, all of which are defined in the CharStyle object.
+        // each function will sanitize it's input text and wrap it an span tag
+        // we then concatanate these span tags into the result
+        let result = "";
+        let prevStyle = this.styleMap[0];
+        let run = this.originalText[0];
+        for (let [c, style] of R.tail(R.zip(this.originalText, this.styleMap))) {
+            if (style === prevStyle) {
+                run += c;
+            } else {
+                result += prevStyle(run); // prevStyle this will sanitize the html
+                prevStyle = style;
+                run = c;
+            }
+        }
+        result += prevStyle(run); // this will sanitize run
+        $(this.element).html(result);
     };
 }
 
