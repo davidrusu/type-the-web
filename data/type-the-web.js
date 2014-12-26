@@ -1,9 +1,9 @@
 // This is the styles we will be applying to the text
 // as they are typed
-const CharStyle = Object.freeze({ COR: (text) => $("<span class='ttw-typed ttw-correct'></span>").text(text)[0].outerHTML
-                                , WRG: (text) => $("<span class='ttw-typed ttw-wrong'></span>").text(text)[0].outerHTML
-                                , CUR: (text) => $("<span class='ttw-typed' id='ttw-cursor'></span>").text(text)[0].outerHTML
-                                , DEF: R.identity
+const CharStyle = Object.freeze({ COR: "COR"
+                                , WRG: "WRG"
+                                , CUR: "CUR"
+                                , DEF: "DEF"
                                 });
 
 let contentData = undefined; // set when the user selects a block of text
@@ -145,24 +145,38 @@ function ContentData(element, originalText) {
     };
     
     this.renderText = () => {
-        // styleMap is a list of functions, all of which are defined in the CharStyle object.
+	// styleMap is a list of functions, all of which are defined in the CharStyle object.
         // each function will sanitize it's input text and wrap it an span tag
         // we then concatanate these span tags into the result
-        let result = "";
+	$(this.element).text(""); // clear the contents
         let prevStyle = this.styleMap[0];
         let run = this.originalText[0];
         for (let [c, style] of R.tail(R.zip(this.originalText, this.styleMap))) {
             if (style === prevStyle) {
                 run += c;
             } else {
-                result += prevStyle(run); // prevStyle this will sanitize the html
-                prevStyle = style;
+		let span = getSpan(prevStyle);
+		span.text(run);
+		$(this.element).append(span);
+		prevStyle = style;
                 run = c;
             }
         }
-        result += prevStyle(run); // this will sanitize run
-        $(this.element).html(result);
+	let span = getSpan(prevStyle);
+	span.text(run);
+	$(this.element).append(span);
     };
+}
+
+function getSpan(style) {
+    let span;
+    switch (style) {
+    case CharStyle.COR: span = $("<span class='ttw-typed ttw-correct'></span>"); break;
+    case CharStyle.WRG: span = $("<span class='ttw-typed ttw-wrong'></span>"); break;
+    case CharStyle.CUR: span = $("<span class='ttw-typed' id='ttw-cursor'></span>"); break;
+    case CharStyle.DEF: span = $("<span></span>"); break;
+    }
+    return span;
 }
 
 function nextElem() {
