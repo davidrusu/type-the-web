@@ -10,11 +10,6 @@ var data = {
             label: "Burst WPM",
             strokeColor: "rgba(230, 120, 30, 1)",
             data: []
-        },
-        {
-            label: "WPM",
-            strokeColor: "rgba(30, 130, 30, 1)",
-            data: []
         }
     ]
 };
@@ -166,7 +161,7 @@ $(document).on('ready', () => {
         $('#wpm').text(wpm);
         if (timeSec - lastUpdateTime > 1) {
             wpmChart.addData(
-                [hudStats.errorsTyped, burstwpm, wpm], timeSec );
+                [hudStats.errorsTyped, burstwpm], timeSec );
             wpmChart.update();
             lastUpdateTime = timeSec;
         }
