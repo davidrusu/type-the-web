@@ -30,7 +30,7 @@ $(document).on('ready', () => {
         animationEasing: "easeOutQuart",
 
         // Boolean - If we should show the scale at all
-        showScale: false,
+        showScale: true,
 
         // Boolean - If we want to override with a hard coded scale
         scaleOverride: false,
@@ -164,7 +164,7 @@ $(document).on('ready', () => {
         $('#errors').text(hudStats.errorsTyped);
         $('#burst').text(burstwpm);
         $('#wpm').text(wpm);
-        if (timeSec - lastUpdateTime > 0.5) {
+        if (timeSec - lastUpdateTime > 1) {
             wpmChart.addData(
                 [hudStats.errorsTyped, burstwpm, wpm], timeSec );
             wpmChart.update();
