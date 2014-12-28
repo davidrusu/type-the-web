@@ -55,6 +55,7 @@ function HudStats() {
     this.startTime = -1;
     this.currentTime = -1;
     this.keysBurst = [];
+    this.errorsBurst = [];
     this.keysTyped = 0;
     this.errorsTyped = 0;
     
@@ -67,14 +68,25 @@ function HudStats() {
     };
 
     this.updateKeysBurst = () => {
-        this.keysBurst =  R.appendTo(R.filter(R.lt(this.currentTime - CONSTANTS.BURST_TIME * 1000),
+        this.keysBurst = R.appendTo(R.filter(R.lt(this.currentTime - CONSTANTS.BURST_TIME * 1000),
                                               this.keysBurst),
                                      this.currentTime);
     };
 
+    this.updateErrorsBurst = () => {
+	this.errorsBurst = R.filter(R.lt(this.currentTime - CONSTANTS.BURST_TIME * 1000)
+				    , this.errorsBurst);
+    };
+
     this.keyPressed = () => {
-        this.updateKeysBurst(this.keysBurst, this.currentTime);
+        this.updateKeysBurst();
+        this.updateErrorsBurst();
         this.keysTyped += 1;
+    };
+
+    this.errorTyped = () => {
+        this.errorsTyped += 1;
+        this.errorsBurst = R.appendTo(this.errorsBurst, this.currentTime);
     };
 
     /** Updates the statistics given the new key event */
@@ -82,7 +94,6 @@ function HudStats() {
         this.currentTime = new Date().getTime();
         this.updateStartTime();
         this.keyPressed();
-        
         let charCode = (typeof e.which === "number") ? e.which : e.keyCode;
         let typedChar = String.fromCharCode(charCode);
         
@@ -91,7 +102,7 @@ function HudStats() {
             contentData.setCursorCorrect();
         } else {
             contentData.setCursorWrong();
-            this.errorsTyped += 1;
+	    this.errorTyped();
         }
     };
 

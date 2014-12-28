@@ -2,7 +2,7 @@ var data = {
     labels: [],
     datasets: [
         {
-            label: "Errors",
+            label: "Burst Errors",
             strokeColor: "rgba(230, 30, 30, 1)",
             data: []
         },
@@ -154,13 +154,16 @@ $(document).on('ready', () => {
         var timeSec = hudStats.timeSoFar / 1000; // time is in millis
         var burstwpm = Math.floor(
             hudStats.keysBurst.length / CONSTANTS.WORD_LENGTH / CONSTANTS.BURST_TIME * 60);
+
+        var bursterrors = Math.floor(
+            hudStats.errorsBurst.length / CONSTANTS.WORD_LENGTH / CONSTANTS.BURST_TIME * 60);
         var wpm = Math.floor(
             (hudStats.keysTyped - hudStats.errorsTyped) / CONSTANTS.WORD_LENGTH / timeSec * 60);
         $('#errors').text(hudStats.errorsTyped);
         $('#burst').text(burstwpm);
         $('#wpm').text(wpm);
         if (timeSec - lastUpdateTime > 1) {
-            wpmChart.addData([hudStats.errorsTyped, burstwpm], '');
+            wpmChart.addData([bursterrors, burstwpm], '');
             wpmChart.update();
             lastUpdateTime = timeSec;
         }
