@@ -155,7 +155,7 @@ $(document).on('ready', () => {
         var burstwpm = Math.floor(
             hudStats.keysBurst.length / CONSTANTS.WORD_LENGTH / CONSTANTS.BURST_TIME * 60);
         var wpm = Math.floor(
-            hudStats.keysTyped / CONSTANTS.WORD_LENGTH / timeSec * 60 - hudStats.errorsTyped / CONSTANTS.WORD_LENGTH);
+            (hudStats.keysTyped - hudStats.errorsTyped) / CONSTANTS.WORD_LENGTH / timeSec * 60);
         $('#errors').text(hudStats.errorsTyped);
         $('#burst').text(burstwpm);
         $('#wpm').text(wpm);
