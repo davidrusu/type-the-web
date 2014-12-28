@@ -160,8 +160,7 @@ $(document).on('ready', () => {
         $('#burst').text(burstwpm);
         $('#wpm').text(wpm);
         if (timeSec - lastUpdateTime > 1) {
-            wpmChart.addData(
-                [hudStats.errorsTyped, burstwpm], timeSec );
+            wpmChart.addData([hudStats.errorsTyped, burstwpm], '');
             wpmChart.update();
             lastUpdateTime = timeSec;
         }
