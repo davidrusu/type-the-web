@@ -150,6 +150,7 @@ $(document).on('ready', () => {
         $("#ttw-skip-button").attr("disabled", "disabled");
     });
     var lastUpdateTime = 0;
+    var numTicks = 0;
     addon.port.on("stats-updated", (hudStats) => {
         var timeSec = hudStats.timeSoFar / 1000; // time is in millis
         var burstwpm = Math.floor(
@@ -163,9 +164,14 @@ $(document).on('ready', () => {
         $('#burst').text(burstwpm);
         $('#wpm').text(wpm);
         if (timeSec - lastUpdateTime > 1) {
+            lastUpdateTime = timeSec;
+	    numTicks += 1;
+	    if (numTicks > 30) {
+		wpmChart.removeData();
+		numTicks -= 1;
+	    }
             wpmChart.addData([bursterrors, burstwpm], '');
             wpmChart.update();
-            lastUpdateTime = timeSec;
         }
     });
 });
