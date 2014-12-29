@@ -175,10 +175,12 @@ function ContentData(element, originalText) {
 	let span = getSpan(prevStyle);
 	span.text(run);
 	$(this.element).append(span);
-
-	$('html, body').animate({
-            scrollTop: $("#ttw-cursor").offset().top - $(window).height() * 1/3
-	}, 100);
+	let cursor = $("#ttw-cursor");
+	if (cursor.length > 0) {
+	    $('html, body').animate({
+		scrollTop: cursor.offset().top - $(window).height() * 1/3
+	    }, 100);
+	}
     };
 }
 
