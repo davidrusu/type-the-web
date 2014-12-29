@@ -175,6 +175,10 @@ function ContentData(element, originalText) {
 	let span = getSpan(prevStyle);
 	span.text(run);
 	$(this.element).append(span);
+
+	$('html, body').animate({
+            scrollTop: $("#ttw-cursor").offset().top - $(window).height() * 1/3
+	}, 100);
     };
 }
 
@@ -183,7 +187,7 @@ function getSpan(style) {
     switch (style) {
     case CharStyle.COR: span = $("<span class='ttw-typed ttw-correct'></span>"); break;
     case CharStyle.WRG: span = $("<span class='ttw-typed ttw-wrong'></span>"); break;
-    case CharStyle.CUR: span = $("<span class='ttw-typed' id='ttw-cursor'></span>"); break;
+    case CharStyle.CUR: span = $("<span id='ttw-cursor'></span>"); break;
     case CharStyle.DEF: span = $("<span></span>"); break;
     }
     return span;
@@ -211,6 +215,7 @@ function stop() {
     unbindHandlers();
     R.forEach((e) => e.parentNode.replaceChild(e.childNodes[0], e),
               document.getElementsByClassName("ttw-selected"));
+    $('#ttw-cursor').removeAttr('id');
     if (contentData) {
         pastContentData.push(contentData);
     }
