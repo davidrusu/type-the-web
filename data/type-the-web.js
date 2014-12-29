@@ -190,7 +190,7 @@ function getSpan(style) {
     case CharStyle.COR: span = $("<span class='ttw-typed ttw-correct'></span>"); break;
     case CharStyle.WRG: span = $("<span class='ttw-typed ttw-wrong'></span>"); break;
     case CharStyle.CUR: span = $("<span id='ttw-cursor'></span>"); break;
-    case CharStyle.DEF: span = $("<span></span>"); break;
+    case CharStyle.DEF: span = $("<span class='ttw-untyped'></span>"); break;
     }
     return span;
 }

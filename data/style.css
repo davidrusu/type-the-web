@@ -1,11 +1,13 @@
 .ttw {
-    background-color: rgba(240, 220,200); /*#d7ccc8;*/
-    color: black;/*#757575; */
-    /*font-family: "Courier New", Courier, monospace;*/
+    color: black;
 }
 
 .ttw-typed {
     color: black;
+}
+
+.ttw-untyped {
+    background-color: #ffeecc;
 }
 
 #ttw-cursor {
