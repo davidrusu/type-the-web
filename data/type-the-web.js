@@ -7,9 +7,10 @@ const CharStyle = Object.freeze({ COR: "COR"
                                 });
 let pastContentData = []; // we keep a list so that we can reset the elements when done
 let contentData; // set when the user selects a block of text
+let nextElement; // the text node to be typed
 
 const handleKeyPress = createKeyHandler();
-
+                            
 const unbindHandlers = () => {
     $(document).unbind("mousemove", highlightTextNodes);
     $(document).unbind("click", setupTest);
@@ -42,10 +43,9 @@ function createKeyHandler() {
             hudStats.newKeyEvent(e, contentData);
             setHUDText(hudStats);
             contentData.incCursor();
+            contentData.renderText();
             if (contentData.doneTyping()) {
                 nextElem();
-            } else {
-                contentData.renderText();
             }
         }
     };
@@ -136,7 +136,9 @@ function ContentData(element, originalText) {
     
     this.incCursor = () => {
         this.cursorIdx += 1;
-        this.setCursorCursor();
+	if (!this.doneTyping()) {
+            this.setCursorCursor();
+	}
     };
 
     this.backspace = () => {
@@ -156,10 +158,7 @@ function ContentData(element, originalText) {
     };
     
     this.renderText = () => {
-	// styleMap is a list of functions, all of which are defined in the CharStyle object.
-        // each function will sanitize it's input text and wrap it an span tag
-        // we then concatanate these span tags into the result
-	$(this.element).text(""); // clear the contents
+	$(this.element).text("");
         let prevStyle = this.styleMap[0];
         let run = this.originalText[0];
         for (let [c, style] of R.tail(R.zip(this.originalText, this.styleMap))) {
@@ -192,22 +191,19 @@ function getSpan(style) {
 
 function nextElem() {
     stop();
-    var nextElem = nextTextElement(contentData.element);
-    if (nextElem) {
-        startTyping(nextElem);
+    // startTyping will modify the nextElement node
+    // so we have to find the next nextElement before
+    // calling startElement
+    let newElement = nextTextElement(nextElement); 
+    if (nextElement) {
+        startTyping(nextElement);
     }
+    nextElement = newElement;
 }
 
 function finish() {
-
-    for (var i = 0; i < pastContentData.length; i++) {
-	pastContentData[i].resetElement();
-    }
-    //for (var x of pastContentData) {
-	//x.resetElement();
-    //}
-    
-    //R.forEach((cd) => cd.resetElement(), pastContentData);
+    stop();
+    pastContentData.forEach((cd) => cd.resetElement());
     pastContentData = [];
 }
 
@@ -218,7 +214,6 @@ function stop() {
     if (contentData) {
         pastContentData.push(contentData);
     }
-    finish();
 }
 
 function startTyping(elem) {
@@ -268,8 +263,9 @@ function setHUDText(hudStats) {
 
 function setupTest(e) {
     e.preventDefault();
-    var textNode = firstTextNode(
+    let textNode = firstTextNode(
         document.elementFromPoint(e.clientX, e.clientY));
+    nextElement = nextTextElement(textNode);
 
     if (textNode === undefined) return;
 
@@ -299,5 +295,5 @@ let highlightTextNodes = (() => {
 
 $(document).mousemove(highlightTextNodes);
 
-self.port.on('stop', stop);
+self.port.on('stop', finish);
 self.port.on('skip', nextElem);
