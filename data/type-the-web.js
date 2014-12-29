@@ -5,8 +5,8 @@ const CharStyle = Object.freeze({ COR: "COR"
                                 , CUR: "CUR"
                                 , DEF: "DEF"
                                 });
-
-let contentData = undefined; // set when the user selects a block of text
+let pastContentData = []; // we keep a list so that we can reset the elements when done
+let contentData; // set when the user selects a block of text
 
 const handleKeyPress = createKeyHandler();
 
@@ -198,13 +198,27 @@ function nextElem() {
     }
 }
 
+function finish() {
+
+    for (var i = 0; i < pastContentData.length; i++) {
+	pastContentData[i].resetElement();
+    }
+    //for (var x of pastContentData) {
+	//x.resetElement();
+    //}
+    
+    //R.forEach((cd) => cd.resetElement(), pastContentData);
+    pastContentData = [];
+}
+
 function stop() {
     unbindHandlers();
     R.forEach((e) => e.parentNode.replaceChild(e.childNodes[0], e),
               document.getElementsByClassName("ttw-selected"));
     if (contentData) {
-        contentData.resetElement();
+        pastContentData.push(contentData);
     }
+    finish();
 }
 
 function startTyping(elem) {
