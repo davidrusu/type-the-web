@@ -102,7 +102,7 @@ function HudStats() {
         let typedChar = String.fromCharCode(charCode);
         
         let cursorChar = contentData.charAtCursor();
-        if (cursorChar === typedChar) {
+        if (cursorChar === typedChar || CharMap[cursorChar] === typedChar) {
             contentData.setCursorCorrect();
         } else {
             contentData.setCursorWrong();
