@@ -39,6 +39,10 @@ function createKeyHandler() {
             setHUDText(hudStats);
             contentData.renderText();
             break;
+	case " ":
+	    if (contentData.cursorIdx === 0 && contentData.charAtCursor() !== " ") {
+		break;
+	    } // else continue as if it was a normal key
         default:
             hudStats.newKeyEvent(e, contentData);
             setHUDText(hudStats);
