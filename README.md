@@ -1,6 +1,6 @@
-type-the-web
+Type The Web
 ============
 
-Firefox addon to turn any web page into a typing excercise 
+Firefox add-on to turn any web page into a typing excercise 
 
 ##Get it on the [add-on store](https://addons.mozilla.org/en-US/firefox/addon/type-the-web/)
