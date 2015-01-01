@@ -118,15 +118,32 @@ function HudStats() {
     };
 }
 
+function preprocess(text) {
+    let changed = true;
+    let result = text;
+    while (changed) {
+	changed = false;
+	for (let k in ReplaceMap) {
+	    let replaced = result.replace(k, ReplaceMap[k]);
+	    if (replaced !== result) {
+		result = replaced;
+		changed = true;
+	    }
+	}
+    }
+    return result;
+}
+
 function ContentData(element, originalText) {
     this.element = element;
     this.originalText = originalText; // the unmodified text from the TextNode we are typing.
+    this.processedText = preprocess(originalText);
     // styleMap is a list of functions that will be applied to the originalText to show errors, cursor...
     // at first we have everything with a default style except for the first character which is the cursor
-    this.styleMap = R.concat([CharStyle.CUR], R.repeatN(CharStyle.DEF, this.originalText.length-1));
+    this.styleMap = R.concat([CharStyle.CUR], R.repeatN(CharStyle.DEF, this.processedText.length-1));
     this.cursorIdx = 0;
     
-    this.charAtCursor = () => this.originalText[this.cursorIdx];
+    this.charAtCursor = () => this.processedText[this.cursorIdx];
 
     
     this._setCursorStyle = (style) => {
@@ -152,7 +169,7 @@ function ContentData(element, originalText) {
         this.setCursorCursor();
     };
 
-    this.doneTyping = () => this.cursorIdx >= this.originalText.length;
+    this.doneTyping = () => this.cursorIdx >= this.processedText.length;
     
     this.resetElement = () => {
         $(this.element).text(this.originalText);
@@ -164,8 +181,8 @@ function ContentData(element, originalText) {
     this.renderText = () => {
 	$(this.element).text("");
         let prevStyle = this.styleMap[0];
-        let run = this.originalText[0];
-        for (let [c, style] of R.tail(R.zip(this.originalText, this.styleMap))) {
+        let run = this.processedText[0];
+        for (let [c, style] of R.tail(R.zip(this.processedText, this.styleMap))) {
             if (style === prevStyle) {
                 run += c;
             } else {
