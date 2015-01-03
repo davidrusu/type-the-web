@@ -120,7 +120,7 @@ function HudStats() {
 
 function preprocess(text) {
     let changed = true;
-    let result = text;
+    let result = text.trim();
     while (changed) {
 	changed = false;
 	for (let k in ReplaceMap) {
@@ -138,8 +138,6 @@ function ContentData(element, originalText) {
     this.element = element;
     this.originalText = originalText; // the unmodified text from the TextNode we are typing.
     this.processedText = preprocess(originalText);
-    // styleMap is a list of functions that will be applied to the originalText to show errors, cursor...
-    // at first we have everything with a default style except for the first character which is the cursor
     this.styleMap = R.concat([CharStyle.CUR], R.repeatN(CharStyle.DEF, this.processedText.length-1));
     this.cursorIdx = 0;
     
