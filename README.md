@@ -1,6 +1,8 @@
 #Type The Web
 
-<img align='center' src ="https://raw.githubusercontent.com/davidrusu/type-the-web/master/data/icon-64.png" />
+<p align="center"> 
+  <img src ="https://raw.githubusercontent.com/davidrusu/type-the-web/master/data/icon-64.png" />
+</p>
 
 Firefox add-on to turn any web page into a typing excercise 
 
