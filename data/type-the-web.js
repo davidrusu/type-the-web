@@ -40,10 +40,6 @@ function createKeyHandler() {
             setHUDText(hudStats);
             contentData.renderText();
             break;
-	case " ":
-	    if (contentData.cursorIdx === 0 && contentData.charAtCursor() !== " ") {
-		break;
-	    } // else continue as if it was a normal key
         default:
             hudStats.newKeyEvent(e, contentData);
             setHUDText(hudStats);
@@ -121,7 +117,7 @@ function HudStats() {
 
 function preprocess(text) {
     let changed = true;
-    let result = text.trim();
+    let result = text.trim() + " ";
     while (changed) {
 	changed = false;
 	for (let k in ReplaceMap) {
@@ -198,7 +194,7 @@ function ContentData(element, originalText) {
 	let cursor = $("#ttw-cursor");
 	if (cursor.length > 0) {
 	    $('html, body').animate({
-		scrollTop: cursor.offset().top - $(window).height() * 1/3
+		scrollTop: cursor.offset().top - 100
 	    }, 100);
 	}
     };
