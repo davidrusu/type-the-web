@@ -5,6 +5,7 @@ const CharStyle = Object.freeze({ COR: "COR"
                                 , CUR: "CUR"
                                 , DEF: "DEF"
                                 });
+
 let pastContentData = []; // we keep a list so that we can reset the elements when done
 let contentData; // set when the user selects a block of text
 let nextElement; // the text node to be typed
@@ -102,7 +103,7 @@ function HudStats() {
         let typedChar = String.fromCharCode(charCode);
         
         let cursorChar = contentData.charAtCursor();
-        if (cursorChar === typedChar || (CharMap[cursorChar] && CharMap[cursorChar].indexOf(typedChar) != 1)) {
+        if (cursorChar === typedChar || (CharMap[cursorChar] && CharMap[cursorChar].indexOf(typedChar) != -1)) {
             contentData.setCursorCorrect();
         } else {
             contentData.setCursorWrong();
@@ -142,12 +143,12 @@ function ContentData(element, originalText) {
     this.cursorIdx = 0;
     
     this.charAtCursor = () => this.processedText[this.cursorIdx];
-
     
     this._setCursorStyle = (style) => {
         if (this.doneTyping()) return;
         this.styleMap[this.cursorIdx] = style;
     };
+    
     this.setCursorCorrect = () => this._setCursorStyle(CharStyle.COR);
     this.setCursorWrong = () => this._setCursorStyle(CharStyle.WRG);
     this.setCursorDefault = () => this._setCursorStyle(CharStyle.DEF);
