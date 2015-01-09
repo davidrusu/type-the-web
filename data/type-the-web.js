@@ -260,13 +260,11 @@ function nextElem() {
 
 function prevElem() {
     let contentDataIdx = pastContentData.indexOf(contentData);
-    console.log('trying prevElem');
     if (contentDataIdx == 0 || pastContentData.length == 0) {
         // This happens when the cursor is at the first character of the
         // first block of text
         //
         // we keep using the existing contentData
-        console.log('doing nothing');
         contentData.incCursor();// contentData was decremented before we were called
     } else { // We know (contentDataIdx == -1 || contentDataIdx > 0) && pastContentData.length != 0
         // This case happens when the user hasn't previously finished typing this contentData
@@ -276,7 +274,10 @@ function prevElem() {
         }
         let prevContentData = pastContentData[idx];
         stop();
-        prevContentData.backspace();
+        if (prevContentData.doneTyping()) {
+            prevContentData.backspace();
+            // we only backspace if the user has typed all of the text in the previous block
+        }
         startTyping(prevContentData);
     }
 }
