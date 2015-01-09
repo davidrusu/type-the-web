@@ -41,6 +41,11 @@ function createKeyHandler() {
             contentData.renderText();
             break;
         default:
+            if (contentData.charAtCursor() != e.key &&
+                contentData.cursorIdx == 0 &&
+                /s/.test(e.key)) {
+                return;// We ignore wrong whitespace at the start of a block
+            } 
             hudStats.newKeyEvent(e, contentData);
             setHUDText(hudStats);
             contentData.incCursor();
@@ -99,7 +104,8 @@ function HudStats() {
         let typedChar = String.fromCharCode(charCode);
         
         let cursorChar = contentData.charAtCursor();
-        if (cursorChar === typedChar || (CharMap[cursorChar] && CharMap[cursorChar].indexOf(typedChar) != -1)) {
+        if (cursorChar === typedChar ||
+            (CharMap[cursorChar] && R.contains(typedChar, CharMap[cursorChar]))) {
             contentData.setCursorCorrect();
         } else {
             contentData.setCursorWrong();
@@ -117,7 +123,7 @@ function HudStats() {
 
 function preprocess(text) {
     let changed = true;
-    let result = text.trim() + " ";
+    let result = text;
     while (changed) {
 	changed = false;
 	for (let k in ReplaceMap) {
