@@ -41,8 +41,12 @@ function createKeyHandler() {
             break;
         case "Backspace":
             contentData.backspace();
-            setHUDText(hudStats);
-            contentData.renderText();
+            if (contentData.isCursorIdxNegative()) {
+                prevElem();
+            } else {
+                setHUDText(hudStats);
+                contentData.renderText();
+            }
             break;
         default:
             if (contentData.charAtCursor() != e.key &&
@@ -168,12 +172,13 @@ function ContentData(element, originalText) {
     };
 
     this.backspace = () => {
-        if (this.cursorIdx === 0) return;
         this.setCursorDefault();
         this.cursorIdx -= 1;
         this.setCursorCursor();
     };
 
+    this.isCursorIdxNegative = () => this.cursorIdx < 0;
+        
     this.doneTyping = () => this.cursorIdx >= this.processedText.length;
     
     this.resetElement = () => {
@@ -221,16 +226,59 @@ function getSpan(style) {
     return span;
 }
 
+function createContentData(element) {
+    $(element).wrap("<span class='ttw'></span>");
+    return new ContentData($(element).parent(), element.nodeValue);
+}
 function nextElem() {
+    let contentDataIdx = pastContentData.indexOf(contentData);
     stop();
-    // startTyping will modify the nextElement node
-    // so we have to find the next nextElement before
-    // calling startElement
-    let newElement = nextTextElement(nextElement); 
-    if (nextElement) {
-        startTyping(nextElement);
+
+    if (contentDataIdx != -1 && pastContentData.length - 1 > contentDataIdx) {
+        // In this case, we were in a block of text that we had previously typed,
+        // Therefore we must have started another block further down and it's
+        // contentData is stored in pastContentData.
+        let nextContentData = pastContentData[contentDataIdx + 1];
+        nextContentData.incCursor();
+        startTyping(nextContentData);
+    } else {
+        // startTyping will modify the nextElement node
+        // so we have to find the next nextElement before
+        // calling startElement
+        let newElement = nextTextElement(nextElement); 
+        if (nextElement) {
+            startTyping(createContentData(nextElement));
+        } else {
+            // There is no more content to type
+            // but we don't call finish because 
+            // we want to perserve the 
+            // highlighting of the errors
+        }
+        nextElement = newElement;
     }
-    nextElement = newElement;
+}
+
+function prevElem() {
+    let contentDataIdx = pastContentData.indexOf(contentData);
+    console.log('trying prevElem');
+    if (contentDataIdx == 0 || pastContentData.length == 0) {
+        // This happens when the cursor is at the first character of the
+        // first block of text
+        //
+        // we keep using the existing contentData
+        console.log('doing nothing');
+        contentData.incCursor();// contentData was decremented before we were called
+    } else { // We know (contentDataIdx == -1 || contentDataIdx > 0) && pastContentData.length != 0
+        // This case happens when the user hasn't previously finished typing this contentData
+        let idx = pastContentData.length -1;
+        if (contentDataIdx != -1) {
+            idx = contentDataIdx - 1;
+        }
+        let prevContentData = pastContentData[idx];
+        stop();
+        prevContentData.backspace();
+        startTyping(prevContentData);
+    }
 }
 
 function finish() {
@@ -244,14 +292,13 @@ function stop() {
     R.forEach((e) => e.parentNode.replaceChild(e.childNodes[0], e),
               document.getElementsByClassName("ttw-selected"));
     $('#ttw-cursor').removeAttr('id');
-    if (contentData) {
+    if (contentData && pastContentData.indexOf(contentData) === -1) {
         pastContentData.push(contentData);
     }
 }
 
-function startTyping(elem) {
-    $(elem).wrap("<span class='ttw'></span>");
-    contentData = new ContentData($(elem).parent(), elem.nodeValue);
+function startTyping(_contentData) {
+    contentData = _contentData;
     contentData.renderText();
     
     $(document).keypress(handleKeyPress);
@@ -303,7 +350,8 @@ function setupTest(e) {
     if (textNode === undefined) return;
 
     stop();
-    startTyping(textNode);
+    startTyping(createContentData(textNode)
+);
 }
 
 $(document).click(setupTest);
