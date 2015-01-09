@@ -21,6 +21,10 @@ const unbindHandlers = () => {
 let invalidKey = R.anyPredicates([R.prop('ctrlKey'),
                                   R.prop('altKey'),
                                   R.prop('metaKey')]);
+function getCharFromKeyEvent(e) {
+    let charCode = (typeof e.which === "number") ? e.which : e.keyCode;
+    return String.fromCharCode(charCode);
+}
 
 function createKeyHandler() {
     let hudStats = new HudStats();
@@ -43,7 +47,7 @@ function createKeyHandler() {
         default:
             if (contentData.charAtCursor() != e.key &&
                 contentData.cursorIdx == 0 &&
-                /s/.test(e.key)) {
+                R.contains(getCharFromKeyEvent(e), CharMap[' '])) {
                 return;// We ignore wrong whitespace at the start of a block
             } 
             hudStats.newKeyEvent(e, contentData);
@@ -100,8 +104,8 @@ function HudStats() {
         this.currentTime = new Date().getTime();
         this.updateStartTime();
         this.keyPressed();
-        let charCode = (typeof e.which === "number") ? e.which : e.keyCode;
-        let typedChar = String.fromCharCode(charCode);
+
+        let typedChar = getCharFromKeyEvent(e);
         
         let cursorChar = contentData.charAtCursor();
         if (cursorChar === typedChar ||
