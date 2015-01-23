@@ -1,17 +1,19 @@
 .ttw {
-    color: black;
+    display: inline;
 }
 
 .ttw-typed {
-    color: black;
+    display: inline;
 }
 
 .ttw-untyped {
     background-color: #ffeecc;
+    display: inline;
 }
 
 #ttw-cursor {
     background-color: #b0bec5;
+    display: inline;
 }
 
 .ttw-correct {
