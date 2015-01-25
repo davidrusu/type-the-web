@@ -49,11 +49,15 @@ function createKeyHandler() {
             }
             break;
         default:
-            if (contentData.charAtCursor() != e.key &&
-                contentData.cursorIdx == 0 &&
-                R.contains(getCharFromKeyEvent(e), CharMap[' '])) {
+            var typedChar = getCharFromKeyEvent(e);
+            var cursorChar = contentData.charAtCursor();
+            var typedIncorrect = () => !(typedChar === cursorChar || (CharMap[cursorChar] && R.contains(typedChar, CharMap[cursorChar])));
+            var typedWhiteSpace = () => CharMap[' '] && R.contains(typedChar, CharMap[' ']);
+            var isTypingFirstChar = contentData.cursorIdx == 0;
+            console.log(cursorChar.charCodeAt(0));
+            if (isTypingFirstChar && typedIncorrect() && typedWhiteSpace()) {
                 return;// We ignore wrong whitespace at the start of a block
-            } 
+            }
             hudStats.newKeyEvent(e, contentData);
             setHUDText(hudStats);
             contentData.incCursor();
