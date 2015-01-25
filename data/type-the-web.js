@@ -49,11 +49,11 @@ function createKeyHandler() {
             }
             break;
         default:
-            var typedChar = getCharFromKeyEvent(e);
-            var cursorChar = contentData.charAtCursor();
-            var typedIncorrect = () => !(typedChar === cursorChar || (CharMap[cursorChar] && R.contains(typedChar, CharMap[cursorChar])));
-            var typedWhiteSpace = () => CharMap[' '] && R.contains(typedChar, CharMap[' ']);
-            var isTypingFirstChar = contentData.cursorIdx == 0;
+            let typedChar = getCharFromKeyEvent(e);
+            let cursorChar = contentData.charAtCursor();
+            let typedIncorrect = () => !(typedChar === cursorChar || (CharMap[cursorChar] && R.contains(typedChar, CharMap[cursorChar])));
+            let typedWhiteSpace = () => CharMap[' '] && R.contains(typedChar, CharMap[' ']);
+            let isTypingFirstChar = contentData.cursorIdx == 0;
             console.log(cursorChar.charCodeAt(0));
             if (isTypingFirstChar && typedIncorrect() && typedWhiteSpace()) {
                 return;// We ignore wrong whitespace at the start of a block
@@ -318,13 +318,13 @@ function findAllTextNodes() {
         }
         return accum;
     });
-    var textNodes = recurse([], $('body')[0]);
+    let textNodes = recurse([], $('body')[0]);
     return textNodes;
 }
 
 function nextTextElement(elem) {
-    var textNodes = findAllTextNodes();
-    var index = R.indexOf(elem, textNodes);
+    let textNodes = findAllTextNodes();
+    let index = R.indexOf(elem, textNodes);
     
     if (index === -1 && index < textNodes.length-1) {
         return false;
@@ -363,7 +363,7 @@ $(document).click(setupTest);
 
 /** need to have a reference to this handler for when we unbind */
 let highlightTextNodes = (() => {
-    var prevElem;
+    let prevElem;
     return (e) => {
         let elem = firstTextNode(
             document.elementFromPoint(e.clientX, e.clientY));
