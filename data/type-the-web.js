@@ -212,7 +212,7 @@ function ContentData(element, originalText) {
 	let cursor = $("#ttw-cursor");
 	if (cursor.length > 0) {
 	    $('html, body').animate({
-		scrollTop: cursor.offset().top - 100
+		scrollTop: Math.round((cursor.offset().top - 100) / 5) * 5
 	    }, 100);
 	}
     };
