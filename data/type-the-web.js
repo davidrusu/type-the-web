@@ -54,7 +54,6 @@ function createKeyHandler() {
             let typedIncorrect = () => !(typedChar === cursorChar || (CharMap[cursorChar] && R.contains(typedChar, CharMap[cursorChar])));
             let typedWhiteSpace = () => CharMap[' '] && R.contains(typedChar, CharMap[' ']);
             let isTypingFirstChar = contentData.cursorIdx == 0;
-            console.log(cursorChar.charCodeAt(0));
             if (isTypingFirstChar && typedIncorrect() && typedWhiteSpace()) {
                 return;// We ignore wrong whitespace at the start of a block
             }
