@@ -210,6 +210,7 @@ function ContentData(element, originalText) {
 	span.text(run);
 	$(this.element).append(span);
 	let cursor = $("#ttw-cursor");
+        console.log(cursor.offset().top);
 	if (cursor.length > 0) {
 	    $('html, body').animate({
 		scrollTop: Math.round((cursor.offset().top - 100) / 5) * 5
