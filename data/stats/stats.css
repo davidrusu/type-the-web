@@ -60,3 +60,9 @@ body {
 #wpm {
     color: rgba(30, 130, 30, 1);
 }
+
+#chart-label {
+    text-align:center;
+    font-size: small;
+    color: #aaaaaa
+}
