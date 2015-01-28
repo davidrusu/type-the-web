@@ -614,21 +614,21 @@
     context.lineWidth = chartOptions.grid.lineWidth;
     context.strokeStyle = chartOptions.grid.strokeStyle;
     // Vertical (time) dividers.
-    //if (chartOptions.grid.millisPerLine > 0) {
-    //  context.beginPath();
-    //  for (var t = time - (time % chartOptions.grid.millisPerLine);
-    //       t >= oldestValidTime;
-    //       t -= chartOptions.grid.millisPerLine) {
-    //    var gx = timeToXPixel(t);
-    //    if (chartOptions.grid.sharpLines) {
-    //      gx -= 0.5;
-    //    }
-    //    context.moveTo(gx, 0);
-    //    context.lineTo(gx, dimensions.height);
-    //  }
-    //  context.stroke();
-    //  context.closePath();
-    //}
+    if (chartOptions.grid.millisPerLine > 0) {
+      context.beginPath();
+      for (var t = time - (time % chartOptions.grid.millisPerLine);
+           t >= oldestValidTime;
+           t -= chartOptions.grid.millisPerLine) {
+        var gx = timeToXPixel(t);
+        if (chartOptions.grid.sharpLines) {
+          gx -= 0.5;
+        }
+        context.moveTo(gx, 0);
+        context.lineTo(gx, dimensions.height);
+      }
+      context.stroke();
+      context.closePath();
+    }
 
     // Horizontal (value) dividers.
     for (var v = 1; v < chartOptions.grid.verticalSections; v++) {
@@ -747,34 +747,15 @@
       context.restore();
     }
 
-    if (!chartOptions.labels.disabled &&  !isNaN(this.valueRange.min) && !isNaN(this.valueRange.max)) {
+    // Draw the axis values on the chart.
+    if (!chartOptions.labels.disabled && !isNaN(this.valueRange.min) && !isNaN(this.valueRange.max)) {
+      var maxValueString = chartOptions.yMaxFormatter(this.valueRange.max, chartOptions.labels.precision),
+          minValueString = chartOptions.yMinFormatter(this.valueRange.min, chartOptions.labels.precision),
+          labelPos = chartOptions.scrollBackwards ? 0 : dimensions.width - context.measureText(maxValueString).width - 2;
       context.fillStyle = chartOptions.labels.fillStyle;
-      var maxValue = this.valueRange.max;
-      var minValue = this.valueRange.min;
-      var maxValueString = Math.floor(maxValue);
-      var minValueString = Math.floor(minValue);
-      var numSections = chartOptions.grid.verticalSections;
-      var deltaValue = (maxValue-minValue) / numSections;
-      var deltaValueString = "";
-      context.fillText(maxValueString, dimensions.width - context.measureText(maxValueString).width - 2, chartOptions.labels.fontSize);
-      for (var i = 1; i < numSections; i++) {
-          deltaValueString = Math.floor(maxValue -i*deltaValue);
-          context.fillText(deltaValueString,
-                           dimensions.width - context.measureText(deltaValueString).width - 2,
-                           Math.floor(dimensions.height*i/numSections + chartOptions.labels.fontSize/2));
-      }
-      context.fillText(minValueString, dimensions.width - context.measureText(minValueString).width - 2, dimensions.height - 2);
+      context.fillText(maxValueString, labelPos, chartOptions.labels.fontSize);
+      context.fillText(minValueString, labelPos, dimensions.height - 2);
     }
-
-    //// Draw the axis values on the chart.
-    //if (!chartOptions.labels.disabled && !isNaN(this.valueRange.min) && !isNaN(this.valueRange.max)) {
-    //  var maxValueString = chartOptions.yMaxFormatter(this.valueRange.max, chartOptions.labels.precision),
-    //      minValueString = chartOptions.yMinFormatter(this.valueRange.min, chartOptions.labels.precision),
-    //      labelPos = chartOptions.scrollBackwards ? 0 : dimensions.width - context.measureText(maxValueString).width - 2;
-    //  context.fillStyle = chartOptions.labels.fillStyle;
-    //  context.fillText(maxValueString, labelPos, chartOptions.labels.fontSize);
-    //  context.fillText(minValueString, labelPos, dimensions.height - 2);
-    //}
 
     // Display timestamps along x-axis at the bottom of the chart.
     if (chartOptions.timestampFormatter && chartOptions.grid.millisPerLine > 0) {
