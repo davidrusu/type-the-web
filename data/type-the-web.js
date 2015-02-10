@@ -31,6 +31,10 @@ function createKeyHandler() {
     return (e) => {
         if (invalidKey(e)) return;
 
+        // remove any highlighting before processing key event
+        R.forEach((e) => e.parentNode.replaceChild(e.childNodes[0], e),
+                  document.getElementsByClassName("ttw-selected"));
+
         e.preventDefault();
         switch(e.key) {
         case "Esc":
@@ -241,7 +245,7 @@ function nextElem() {
     if (contentDataIdx != -1 && pastContentData.length - 1 > contentDataIdx) {
         // In this case, we were in a block of text that we had previously typed,
         // Therefore we must have started another block further down and it's
-        // contentData is stored in pastContentData.
+        // contennntData is stored in pastContentData.
         let nextContentData = pastContentData[contentDataIdx + 1];
         nextContentData.incCursor();
         startTyping(nextContentData);
@@ -255,7 +259,7 @@ function nextElem() {
         } else {
             // There is no more content to type
             // but we don't call finish because 
-            // we want to perserve the 
+            // we want to preserve the 
             // highlighting of the errors
         }
         nextElement = newElement;
@@ -306,6 +310,8 @@ function startTyping(_contentData) {
     contentData = _contentData;
     contentData.renderText();
     
+    $(contentData.element).wrap("<span class='ttw-selected ttw'></span>");
+
     $(document).keypress(handleKeyPress);
 }
 
