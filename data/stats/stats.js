@@ -1,5 +1,9 @@
 $(document).on('ready', () => {
-    var chart = new SmoothieChart({ millisPerPixel:273
+    
+    var canvas = document.getElementById("wpm-chart");
+    var chartWidth = canvas.offsetWidth;
+    var chartMillis = 1000*60 *5;
+    var chart = new SmoothieChart({ millisPerPixel:chartMillis / chartWidth
                                   , interpolation:'bezier'
                                   , grid: { fillStyle:'#ffffff'
                                           , strokeStyle:'rgba(0,0,0,0.10)'
@@ -11,7 +15,6 @@ $(document).on('ready', () => {
                                   //, timestampFormatter: SmoothieChart.timeFormatter
                                   , minValue:0});
 
-    var canvas = document.getElementById("wpm-chart");
     var wpmSeries = new TimeSeries();
     var errorSeries = new TimeSeries();
 
