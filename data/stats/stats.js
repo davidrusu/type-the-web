@@ -33,11 +33,16 @@ $(document).on('ready', () => {
     var numTicks = 0;
     addon.port.on("stats-updated", (hudStats) => {
         var timeSec = hudStats.timeSoFar / 1000; // time is in millis
-        var burstwpm = Math.floor(
-            hudStats.keysBurst.length / CONSTANTS.WORD_LENGTH / CONSTANTS.BURST_TIME * 60);
-
-        var bursterrors = Math.floor(
-            hudStats.errorsBurst.length / CONSTANTS.WORD_LENGTH / CONSTANTS.BURST_TIME * 60);
+        var burstwpm = 0;
+        if (hudStats.keysBurst.length > 0) {
+            burstwpm = Math.floor(
+                hudStats.keysBurst.length / CONSTANTS.WORD_LENGTH / CONSTANTS.BURST_TIME * 60);
+        }
+        var bursterrors = 0;
+        if (hudStats.errorsBurst.length > 0) {
+            bursterrors = Math.floor(
+                hudStats.errorsBurst.length / CONSTANTS.WORD_LENGTH / CONSTANTS.BURST_TIME * 60);
+        }
         var wpm = Math.floor(
             (hudStats.keysTyped - hudStats.errorsTyped) / CONSTANTS.WORD_LENGTH / timeSec * 60);
         $('#errors').text(hudStats.errorsTyped);

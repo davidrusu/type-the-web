@@ -89,8 +89,8 @@ function HudStats() {
     };
 
     this.updateKeysBurst = () => {
-        this.keysBurst = R.appendTo(R.filter(R.lt(this.currentTime - CONSTANTS.BURST_TIME * 1000),
-                                              this.keysBurst),
+        this.keysBurst = R.appendTo(R.filter((x) => this.currentTime - CONSTANTS.BURST_TIME * 1000 < x,
+                                             this.keysBurst),
                                      this.currentTime);
     };
 
@@ -217,7 +217,7 @@ function ContentData(element, originalText) {
 	let cursor = $("#ttw-cursor");
 	if (cursor.length > 0) {
 	    $('html, body').animate({
-		scrollTop: Math.round((cursor.offset().top - 100) / 5) * 5
+		scrollTop: Math.round((cursor.offset().top - 100) / 15) * 15
 	    }, 100);
 	}
     };
