@@ -1,5 +1,5 @@
 <h1 align="center"> 
-  <img src ="https://raw.githubusercontent.com/davidrusu/type-the-web/master/data/icon-64.png" />
+  <img src ="https://raw.githubusercontent.com/davidrusu/type-the-web/master/data/images/icon-64.png" />
   <br/>
   Type The Web
 </h1>
