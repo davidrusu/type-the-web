@@ -4,9 +4,9 @@ Follow these [instructions](https://developer.mozilla.org/en-US/Add-ons/SDK/Tuto
 You should now have a ```addon-sdk-1.x/``` directory. For the rest of these instructions we will assume you are inside of this directory.
 
 ## Getting the Code
-Fork this repo on github and clone it to your computer
+Fork this repository on github and clone it to your computer
 
-    git clone "url/to/your/fork"
+    git clone "clone/url/of/your/fork"
 
 Your directory structure should now look something like this:
 
@@ -105,5 +105,19 @@ If you encountered any problems running the addon please open an issue on github
     ├── ttw-screen2.png
     └── type-the-web.xpi        # The addon build that is distributed
 
-TODO:
 # How Things Fit Together
+When starts, it loads all of the enabled plugins, it does this by running ```./lib/main.js```. Here we setup a few things:
+
+- Tell Firefox to inject ```data/style.css``` into every page
+- Sidebar is initialized
+- Initialize the button users click to activate the plugin
+  - The greeting panel is reinitialized each time the plugin is pressed
+
+## User Pushes the Add-on button
+The ```onClick()``` handler for the button fires. To get a typing session going, we need to attach the relevant JavaScript files, to do this we use the ```tab.attach()``` method which takes a JS Object containing various properties we want to attach to a tab and *attaches* them to the tab.
+
+We only care about attaching some script files so we only include the ```contentScriptFile```. The order in which we attach scripts is important eg. ```type-the-web.js``` uses functions from ```ramda-0.8.0.min.js```.
+
+So the add-on is running and the user can select the block of text they want to start typing.
+
+TODO: explain how ```type-the-web.js``` works
