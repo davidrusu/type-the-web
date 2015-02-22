@@ -106,7 +106,7 @@ If you encountered any problems running the addon please open an issue on github
     └── type-the-web.xpi        # The addon build that is distributed
 
 # How Things Fit Together
-When starts, it loads all of the enabled plugins, it does this by running ```./lib/main.js```. Here we setup a few things:
+When Firefox starts, it loads all of the enabled plugins, it does this by running ```./lib/main.js```. Here we setup a few things:
 
 - Tell Firefox to inject ```data/style.css``` into every page
 - Sidebar is initialized
