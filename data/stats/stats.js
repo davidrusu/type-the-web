@@ -8,7 +8,7 @@ $(document).on('ready', () => {
                                   , grid: { fillStyle:'#ffffff'
                                           , strokeStyle:'rgba(0,0,0,0.10)'
                                           , verticalSections:4
-                                          , borderVisible:false }
+                                          , borderVisible:true }
                                   , labels: { fillStyle:'#777777'
                                             , fontSize:15
                                             , precision:0 }
