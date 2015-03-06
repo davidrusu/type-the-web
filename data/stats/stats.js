@@ -7,7 +7,7 @@ $(document).on('ready', () => {
                                   , interpolation:'bezier'
                                   , grid: { fillStyle:'#ffffff'
                                           , strokeStyle:'rgba(0,0,0,0.10)'
-                                          , verticalSections:3
+                                          , verticalSections:4
                                           , borderVisible:false }
                                   , labels: { fillStyle:'#777777'
                                             , fontSize:15
