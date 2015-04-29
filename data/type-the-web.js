@@ -1,9 +1,9 @@
 // This is the styles we will be applying to the text
 // as they are typed
 const CharStyle = Object.freeze({ COR: "COR"
-                                , WRG: "WRG"
-                                , CUR: "CUR"
-                                , DEF: "DEF"
+                                  , WRG: "WRG"
+                                  , CUR: "CUR"
+                                  , DEF: "DEF"
                                 });
 
 let pastContentData = []; // we keep a list so that we can reset the elements when done
@@ -11,16 +11,18 @@ let contentData; // set when the user selects a block of text
 let nextElement; // the text node to be typed
 
 const handleKeyPress = createKeyHandler();
-                            
+
 const unbindHandlers = () => {
     $(document).unbind("mousemove", highlightTextNodes);
     $(document).unbind("click", setupTest);
     $(document).unbind('keypress', handleKeyPress);
 };
 
-let invalidKey = R.anyPredicates([R.prop('ctrlKey'),
-                                  R.prop('altKey'),
-                                  R.prop('metaKey')]);
+let invalidKey = R.anyPredicates([R.prop('altKey'),
+                                  R.prop('metaKey'),
+                                  (k) => R.prop('ctrlKey', k) && k.key !== "Backspace"
+                                 ]);
+
 function getCharFromKeyEvent(e) {
     let charCode = (typeof e.which === "number") ? e.which : e.keyCode;
     return String.fromCharCode(charCode);
@@ -44,6 +46,20 @@ function createKeyHandler() {
             nextElem();
             break;
         case "Backspace":
+            if (R.prop('ctrlKey', e) && !contentData.isAtStart()) {
+                // word backspace
+                while (!contentData.isAtStart() && R.contains(contentData.charBeforeCursor(), CharMap[' '])) {
+                    // backspace over whitespace
+                    contentData.backspace();
+                }
+                while (!contentData.isAtStart() && !R.contains(contentData.charBeforeCursor(), CharMap[' '])) {
+                    // backspace over word
+                    contentData.backspace();
+                }
+                setHUDText(hudStats);
+                contentData.renderText();
+                break;
+            }
             contentData.backspace();
             if (contentData.isCursorIdxNegative()) {
                 prevElem();
@@ -91,12 +107,12 @@ function HudStats() {
     this.updateKeysBurst = () => {
         this.keysBurst = R.appendTo(R.filter((x) => this.currentTime - CONSTANTS.BURST_TIME * 1000 < x,
                                              this.keysBurst),
-                                     this.currentTime);
+                                    this.currentTime);
     };
 
     this.updateErrorsBurst = () => {
-	this.errorsBurst = R.filter(R.lt(this.currentTime - CONSTANTS.BURST_TIME * 1000)
-				    , this.errorsBurst);
+	      this.errorsBurst = R.filter(R.lt(this.currentTime - CONSTANTS.BURST_TIME * 1000)
+				                            , this.errorsBurst);
     };
 
     this.keyPressed = () => {
@@ -124,7 +140,7 @@ function HudStats() {
             contentData.setCursorCorrect();
         } else {
             contentData.setCursorWrong();
-	    this.errorTyped();
+	          this.errorTyped();
         }
     };
 
@@ -140,14 +156,14 @@ function preprocess(text) {
     let changed = true;
     let result = text;
     while (changed) {
-	changed = false;
-	for (let k in ReplaceMap) {
-	    let replaced = result.replace(k, ReplaceMap[k]);
-	    if (replaced !== result) {
-		result = replaced;
-		changed = true;
-	    }
-	}
+	      changed = false;
+	      for (let k in ReplaceMap) {
+	          let replaced = result.replace(k, ReplaceMap[k]);
+	          if (replaced !== result) {
+		            result = replaced;
+		            changed = true;
+	          }
+	      }
     }
     return result;
 }
@@ -161,6 +177,8 @@ function ContentData(element, originalText) {
     
     this.charAtCursor = () => this.processedText[this.cursorIdx];
     
+    this.charBeforeCursor = () => this.processedText[this.cursorIdx - 1];
+
     this._setCursorStyle = (style) => {
         if (this.doneTyping()) return;
         this.styleMap[this.cursorIdx] = style;
@@ -173,9 +191,9 @@ function ContentData(element, originalText) {
     
     this.incCursor = () => {
         this.cursorIdx += 1;
-	if (!this.doneTyping()) {
+	      if (!this.doneTyping()) {
             this.setCursorCursor();
-	}
+	      }
     };
 
     this.backspace = () => {
@@ -185,7 +203,9 @@ function ContentData(element, originalText) {
     };
 
     this.isCursorIdxNegative = () => this.cursorIdx < 0;
-        
+    
+    this.isAtStart = () => this.cursorIdx == 0;
+    
     this.doneTyping = () => this.cursorIdx >= this.processedText.length;
     
     this.resetElement = () => {
@@ -196,30 +216,30 @@ function ContentData(element, originalText) {
     };
     
     this.renderText = () => {
-	$(this.element).text("");
+	      $(this.element).text("");
         let prevStyle = this.styleMap[0];
         let run = this.processedText[0];
         for (let [c, style] of R.tail(R.zip(this.processedText, this.styleMap))) {
             if (style === prevStyle) {
                 run += c;
             } else {
-		let span = getSpan(prevStyle);
-		span.text(run);
-		$(this.element).append(span);
-		prevStyle = style;
+		            let span = getSpan(prevStyle);
+		            span.text(run);
+		            $(this.element).append(span);
+		            prevStyle = style;
                 run = c;
             }
         }
-	let span = getSpan(prevStyle);
-	span.text(run);
-	$(this.element).append(span);
+	      let span = getSpan(prevStyle);
+	      span.text(run);
+	      $(this.element).append(span);
 
-	let cursor = $("#ttw-cursor");
-	if (cursor.length > 0) {
-	    $('html, body').animate({
-		scrollTop: Math.round((cursor.offset().top - 100) / 15) * 15
-	    }, 100);
-	}
+	      let cursor = $("#ttw-cursor");
+	      if (cursor.length > 0) {
+	          $('html, body').animate({
+		            scrollTop: Math.round((cursor.offset().top - 100) / 15) * 15
+	          }, 100);
+	      }
     };
 }
 
@@ -362,7 +382,7 @@ function setupTest(e) {
 
     stop();
     startTyping(createContentData(textNode)
-);
+               );
 }
 
 $(document).click(setupTest);
