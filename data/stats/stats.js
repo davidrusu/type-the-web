@@ -19,7 +19,7 @@ $(document).on('ready', () => {
     var errorSeries = new TimeSeries();
 
     chart.addTimeSeries(wpmSeries, {lineWidth:2,strokeStyle:'#97e819'});
-    chart.addTimeSeries(errorSeries, {lineWidth:2,strokeStyle:'#ffa819'});
+    chart.addTimeSeries(errorSeries, {lineWidth:2,strokeStyle:'#e61e1e'});
 
     chart.streamTo(canvas, 0);
 

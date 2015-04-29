@@ -7,21 +7,21 @@
 }
 
 .ttw-untyped {
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0.1);
     display: inline;
 }
 
 #ttw-cursor {
-    background-color: rgba(0,0,200,0.3);
+    background-color: rgba(150,150,100,0.6);
     display: inline;
 }
 
 .ttw-correct {
-    background-color: rgba(0,200,0,0.3);
+    background-color: rgba(100,200,0,0.15);
 }
 
 .ttw-wrong {
-    background-color: rgba(200,0,0,0.3);
+    background-color: rgba(200,50,0,0.6);
 }
 
 .ttw-selected {
